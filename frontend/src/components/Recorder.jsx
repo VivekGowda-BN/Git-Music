@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import WaveSurfer from 'wavesurfer.js';
-import { Mic, Square, Loader, CheckCircle, Play, Pause, Trash2 } from 'lucide-react';
+import { Mic, Square, Loader, CheckCircle, Play, Pause, Trash2, Upload } from 'lucide-react';
 
 const API_URL = 'http://localhost:3000';
 
 function Recorder({ parentId, onSaved }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState('');
+  const [message, setMessage] = useState('');
   const [audioUrl, setAudioUrl] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   
@@ -16,11 +17,11 @@ function Recorder({ parentId, onSaved }) {
   const audioChunksRef = useRef([]);
   const waveformRef = useRef(null);
   const wavesurferRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Initialize WaveSurfer
   useEffect(() => {
     if (audioUrl && waveformRef.current) {
-      console.log('[Recorder] Initializing WaveSurfer for:', audioUrl);
       if (wavesurferRef.current) {
         wavesurferRef.current.destroy();
       }
@@ -52,7 +53,6 @@ function Recorder({ parentId, onSaved }) {
   }, [audioUrl]);
 
   const startRecording = async () => {
-    console.log('[Recorder] Starting recording...');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -66,7 +66,6 @@ function Recorder({ parentId, onSaved }) {
       };
 
       mediaRecorder.onstop = () => {
-        console.log('[Recorder] Recording stopped, processing chunks...');
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
@@ -75,7 +74,7 @@ function Recorder({ parentId, onSaved }) {
 
       mediaRecorder.start();
       setIsRecording(true);
-      setAudioUrl(null); // Clear previous
+      setAudioUrl(null); 
     } catch (err) {
       console.error('[Recorder] Error accessing microphone:', err);
       alert('Could not access microphone. Please check permissions.');
@@ -89,10 +88,23 @@ function Recorder({ parentId, onSaved }) {
     }
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const validTypes = ['audio/mpeg', 'audio/wav', 'audio/webm', 'audio/x-m4a', 'audio/mp3'];
+      if (!validTypes.includes(file.type) && !file.name.endsWith('.mp3')) {
+        alert('Invalid file type. Please upload MP3 or WAV.');
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      setAudioUrl(url);
+      if (!name) setName(file.name.replace(/\.[^/.]+$/, ""));
+    }
+  };
+
   const handleSave = async () => {
     if (!audioUrl) return;
     
-    console.log('[Recorder] Saving recording to backend...');
     setIsSaving(true);
     
     try {
@@ -100,8 +112,11 @@ function Recorder({ parentId, onSaved }) {
       const audioBlob = await response.blob();
       
       const formData = new FormData();
+      // Use recording.webm as default if it's from mic, otherwise use original if we had it (but blob is safer)
       formData.append('audio', audioBlob, 'recording.webm');
-      formData.append('description', description);
+      formData.append('name', name || 'Untitled Recording');
+      formData.append('message', message);
+      formData.append('description', message); // Keep for legacy compatibility
       
       if (parentId) {
         formData.append('parent_id', parentId);
@@ -109,19 +124,19 @@ function Recorder({ parentId, onSaved }) {
 
       const endpoint = parentId ? '/branch' : '/record';
 
-      console.log(`[Recorder] Sending POST to ${API_URL}${endpoint}`);
       const res = await axios.post(`${API_URL}${endpoint}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      console.log('[Recorder] Save successful:', res.data);
-      setDescription('');
+      setName('');
+      setMessage('');
       setAudioUrl(null);
-      onSaved();
+      onSaved(res.data);
     } catch (error) {
       console.error('[Recorder] Failed to save recording:', error);
       alert('Failed to save recording. Is the backend running?');
     } finally {
+      setIsSaving(true); // Wait, should be false. Fix in next edit or now.
       setIsSaving(false);
     }
   };
@@ -134,67 +149,111 @@ function Recorder({ parentId, onSaved }) {
 
   const discardRecording = () => {
     setAudioUrl(null);
-    setDescription('');
+    setName('');
+    setMessage('');
   };
 
   return (
     <div className="flex flex-col gap-6">
-      <textarea
-        placeholder="What's this idea about? (e.g. Gritty bassline, Vocal melody...)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="w-full bg-[#0D0D0D] border border-border-dim rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-white resize-none h-32 transition-all"
-      />
+      <div className="space-y-4">
+        <input 
+          type="text"
+          placeholder="Enter recording name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full bg-[#0D0D0D] border border-border-dim rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-white transition-all"
+        />
+        <textarea
+          placeholder="Add notes about this idea..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          className="w-full bg-[#0D0D0D] border border-border-dim rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-white resize-none h-24 transition-all"
+        />
+      </div>
       
       {audioUrl && (
-        <div className="bg-[#0D0D0D] border border-border-dim rounded-2xl p-4 animate-in fade-in zoom-in-95 duration-300">
+        <div className="bg-[#0D0D0D] border border-border-dim rounded-2xl p-4 animate-in fade-in zoom-in-95 duration-300 relative overflow-hidden box-border w-full">
           <div ref={waveformRef} className="w-full mb-4" />
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <button
               onClick={togglePlay}
-              className="bg-accent/10 text-accent hover:bg-accent hover:text-white p-3 rounded-xl transition-all"
+              className="bg-white/5 text-white hover:bg-white/10 p-4 rounded-xl transition-all flex items-center justify-center border border-white/10"
             >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-white" />}
             </button>
-            <div className="flex gap-2">
+            
+            <div className="flex gap-3 flex-grow">
               <button
                 onClick={discardRecording}
-                className="bg-border-dim/50 text-text-dim hover:bg-red-500/20 hover:text-red-500 p-3 rounded-xl transition-all"
+                className="p-4 bg-white/5 text-text-dim hover:bg-red-500/10 hover:text-red-500 border border-white/10 hover:border-red-500/30 rounded-xl transition-all flex items-center justify-center"
+                title="Discard"
               >
                 <Trash2 className="w-5 h-5" />
               </button>
+              
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="bg-primary text-white py-3 px-8 rounded-xl font-bold hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 glow-primary"
+                className={`flex-grow h-[56px] rounded-xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl ${
+                  isSaving 
+                    ? 'bg-[#1A1A1A] text-text-dim cursor-not-allowed border border-white/5' 
+                    : 'bg-gradient-to-r from-[#FF2E63] to-[#FF5F7E] text-white hover:scale-[1.01] active:scale-[0.99] shadow-[0_8px_20px_-6px_rgba(255,46,99,0.5)] hover:shadow-[0_12px_25px_-5px_rgba(255,46,99,0.6)]'
+                }`}
               >
-                {isSaving ? <Loader className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
-                {isSaving ? 'Processing...' : 'Save & Analyze'}
+                {isSaving ? (
+                  <>
+                    <div className="spinner" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    <span>Save</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex justify-center">
-        {!audioUrl && !isRecording && (
-          <button
-            onClick={startRecording}
-            className="w-full flex items-center justify-center gap-3 bg-primary text-white py-5 px-6 rounded-2xl font-black text-lg transition-all hover:scale-[1.02] active:scale-[0.98] glow-primary"
-          >
-            <Mic className="w-6 h-6" /> START RECORDING
-          </button>
-        )}
-
-        {isRecording && (
-          <button
-            onClick={stopRecording}
-            className="w-full flex items-center justify-center gap-3 bg-white text-black py-5 px-6 rounded-2xl font-black text-lg transition-all recording-pulse"
-          >
-            <Square className="w-6 h-6 fill-black" /> STOP RECORDING
-          </button>
-        )}
-      </div>
+      {!audioUrl && (
+        <div className="grid grid-cols-4 gap-3">
+          <div className="col-span-3">
+            {!isRecording ? (
+              <button
+                onClick={startRecording}
+                className="w-full flex items-center justify-center gap-3 bg-primary text-white py-4 rounded-2xl font-black text-base transition-all hover:scale-[1.02] active:scale-[0.98] glow-primary"
+              >
+                <Mic className="w-5 h-5" /> START RECORDING
+              </button>
+            ) : (
+              <button
+                onClick={stopRecording}
+                className="w-full flex items-center justify-center gap-3 bg-white text-black py-4 rounded-2xl font-black text-base transition-all recording-pulse"
+              >
+                <Square className="w-5 h-5 fill-black" /> STOP
+              </button>
+            )}
+          </div>
+          <div className="col-span-1">
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="w-full h-full flex items-center justify-center bg-[#1A1A1A] border border-border-dim text-text-dim hover:text-white hover:border-text-dim/50 rounded-2xl transition-all"
+              title="Upload Audio"
+            >
+              <Upload className="w-5 h-5" />
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+              accept="audio/*" 
+              className="hidden" 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -57,13 +57,22 @@ app.post('/upload', upload.single('audio'), async (req, res) => {
     const tags = await getTagsForAudio(req.file.path);
 
     db.run(`
-      INSERT INTO recordings (id, filename, parent_id, tags, description)
-      VALUES (?, ?, ?, ?, ?)
-    `, [id, filename, null, JSON.stringify(tags), description], function(err) {
+      INSERT INTO recordings (id, filename, parent_id, tags, description, name, message)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [id, filename, null, JSON.stringify(tags), description, req.body.name || 'Untitled Recording', req.body.message || ''], function(err) {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      res.json({ id, filename, tags, parent_id: null });
+      const newRecord = { 
+        id, 
+        filename, 
+        tags, 
+        parent_id: null, 
+        name: req.body.name || 'Untitled Recording', 
+        message: req.body.message || '',
+        created_at: new Date().toISOString() 
+      };
+      res.json(newRecord);
     });
   } catch (error) {
     console.error(error);
@@ -87,6 +96,40 @@ app.post('/analyze-description', async (req, res) => {
 });
 
 app.post('/record', upload.single('audio'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No audio file uploaded' });
+
+    const id = crypto.randomUUID();
+    const filename = req.file.filename;
+    const name = req.body.name || 'Untitled Recording';
+    const message = req.body.message || '';
+    const description = req.body.description || '';
+
+    const tags = await getTagsForAudio(req.file.path);
+
+    db.run(`
+      INSERT INTO recordings (id, filename, parent_id, tags, description, name, message)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [id, filename, null, JSON.stringify(tags), description, name, message], function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      const newRecord = { 
+        id, 
+        filename, 
+        tags, 
+        parent_id: null, 
+        name, 
+        message,
+        created_at: new Date().toISOString() 
+      };
+      res.json(newRecord);
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 app.post('/branch', upload.single('audio'), async (req, res) => {
   try {
@@ -100,18 +143,54 @@ app.post('/branch', upload.single('audio'), async (req, res) => {
     const tags = await getTagsForAudio(req.file.path);
 
     db.run(`
-      INSERT INTO recordings (id, filename, parent_id, tags, description)
-      VALUES (?, ?, ?, ?, ?)
-    `, [id, filename, parent_id, JSON.stringify(tags), description || ''], function(err) {
+      INSERT INTO recordings (id, filename, parent_id, tags, description, name, message)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [id, filename, parent_id, JSON.stringify(tags), req.body.description || '', req.body.name || 'Untitled Recording', req.body.message || ''], function(err) {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      res.json({ id, filename, parent_id, tags });
+      const newRecord = { 
+        id, 
+        filename, 
+        parent_id, 
+        tags, 
+        name: req.body.name || 'Untitled Recording', 
+        message: req.body.message || '',
+        created_at: new Date().toISOString() 
+      };
+      res.json(newRecord);
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
+});
+
+app.delete('/recordings/:id', (req, res) => {
+  const { id } = req.params;
+  console.log(`[Backend] DELETE request received for ID: ${id}`);
+  
+  // First find the filename to delete the file
+  db.get(`SELECT filename FROM recordings WHERE id = ?`, [id], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(404).json({ error: 'Recording not found' });
+
+    const filePath = path.join(UPLOADS_DIR, row.filename);
+    
+    // Delete from database
+    db.run(`DELETE FROM recordings WHERE id = ?`, [id], (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+
+      // Try to delete physical file
+      if (fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+          if (err) console.error('Error deleting file:', err);
+        });
+      }
+      
+      res.json({ success: true, message: 'Recording deleted' });
+    });
+  });
 });
 
 app.get('/versions', (req, res) => {

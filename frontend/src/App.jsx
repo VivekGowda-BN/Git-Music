@@ -24,9 +24,25 @@ function App() {
     fetchRecordings();
   }, []);
 
-  const handleRecordingSaved = () => {
-    fetchRecordings();
+  const handleRecordingSaved = (newRecord) => {
+    if (newRecord) {
+      setRecordings(prev => [...prev, newRecord]);
+    } else {
+      fetchRecordings(); // Fallback
+    }
     setSelectedParentId(null); // Reset selection
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this recording? This cannot be undone.')) return;
+
+    try {
+      await axios.delete(`${API_URL}/recordings/${id}`);
+      setRecordings(prev => prev.filter(r => r.id !== id));
+    } catch (err) {
+      console.error('Failed to delete recording', err);
+      alert('Failed to delete recording');
+    }
   };
 
   const filteredRecordings = recordings.filter(r => {
@@ -72,14 +88,14 @@ function App() {
             <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
               <Mic className="w-6 h-6 text-primary" /> Record Idea
             </h2>
-            
+
             {selectedParentId && (
               <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl flex items-center gap-3 text-sm animate-in fade-in slide-in-from-top-4">
                 <GitBranch className="w-5 h-5 text-primary" />
                 <span className="text-primary font-bold">
                   Branching from: <span className="font-mono">{selectedParentId.substring(0, 8)}</span>
                 </span>
-                <button 
+                <button
                   onClick={() => setSelectedParentId(null)}
                   className="ml-auto text-text-dim hover:text-white transition-colors"
                 >
@@ -88,9 +104,9 @@ function App() {
               </div>
             )}
 
-            <Recorder 
-              parentId={selectedParentId} 
-              onSaved={handleRecordingSaved} 
+            <Recorder
+              parentId={selectedParentId}
+              onSaved={handleRecordingSaved}
             />
           </div>
         </div>
@@ -100,10 +116,11 @@ function App() {
             <h2 className="text-xl font-bold mb-8 flex items-center gap-3">
               <GitBranch className="w-6 h-6 text-accent" /> Version Tree
             </h2>
-            <VersionTree 
-              recordings={filteredRecordings} 
-              onSelectParent={setSelectedParentId} 
+            <VersionTree
+              recordings={filteredRecordings}
+              onSelectParent={setSelectedParentId}
               selectedParentId={selectedParentId}
+              onDelete={handleDelete}
             />
           </div>
         </div>

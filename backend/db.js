@@ -18,9 +18,13 @@ db.serialize(() => {
       parent_id TEXT,
       tags TEXT,
       description TEXT,
+      name TEXT,
+      message TEXT,
       FOREIGN KEY(parent_id) REFERENCES recordings(id)
     )
   `);
+  db.run(`ALTER TABLE recordings ADD COLUMN name TEXT`, (err) => { /* ignore if already exists */ });
+  db.run(`ALTER TABLE recordings ADD COLUMN message TEXT`, (err) => { /* ignore if already exists */ });
 });
 
 module.exports = db;
