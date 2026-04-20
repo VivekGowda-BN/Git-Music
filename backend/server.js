@@ -166,31 +166,56 @@ app.post('/branch', upload.single('audio'), async (req, res) => {
   }
 });
 
-app.delete('/recordings/:id', (req, res) => {
-  const { id } = req.params;
-  console.log(`[Backend] DELETE request received for ID: ${id}`);
-  
-  // First find the filename to delete the file
-  db.get(`SELECT filename FROM recordings WHERE id = ?`, [id], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!row) return res.status(404).json({ error: 'Recording not found' });
-
-    const filePath = path.join(UPLOADS_DIR, row.filename);
-    
-    // Delete from database
-    db.run(`DELETE FROM recordings WHERE id = ?`, [id], (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-
-      // Try to delete physical file
-      if (fs.existsSync(filePath)) {
-        fs.unlink(filePath, (err) => {
-          if (err) console.error('Error deleting file:', err);
-        });
-      }
+// Helper to recursively find and delete recordings
+async function deleteRecursive(id) {
+  return new Promise((resolve, reject) => {
+    // 1. Find the recording and its children
+    db.all(`SELECT id, filename FROM recordings WHERE id = ? OR parent_id = ?`, [id, id], async (err, rows) => {
+      if (err) return reject(err);
       
-      res.json({ success: true, message: 'Recording deleted' });
+      const parent = rows.find(r => r.id === id);
+      const children = rows.filter(r => r.id !== id);
+
+      // 2. Recursively delete children first
+      for (const child of children) {
+        await deleteRecursive(child.id);
+      }
+
+      // 3. Delete the parent record and file
+      if (parent) {
+        const filePath = path.join(UPLOADS_DIR, parent.filename);
+        
+        db.run(`DELETE FROM recordings WHERE id = ?`, [id], (err) => {
+          if (err) {
+            console.error(`Failed to delete DB record for ${id}:`, err.message);
+            // Even if DB fails, we try to continue or report
+          }
+          
+          if (fs.existsSync(filePath)) {
+            fs.unlink(filePath, (err) => {
+              if (err) console.error(`Error deleting file ${parent.filename}:`, err);
+            });
+          }
+          resolve();
+        });
+      } else {
+        resolve();
+      }
     });
   });
+}
+
+app.delete('/recordings/:id', async (req, res) => {
+  const { id } = req.params;
+  console.log(`[Backend] Recursive DELETE request received for ID: ${id}`);
+  
+  try {
+    await deleteRecursive(id);
+    res.json({ success: true, message: 'Recording and its branches deleted' });
+  } catch (err) {
+    console.error('[Backend] Delete failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/versions', (req, res) => {
@@ -223,6 +248,32 @@ app.get('/versions', (req, res) => {
       res.status(500).json({ error: 'Failed to process recordings' });
     }
   });
+});
+const FormData = require('form-data');
+const PYTHON_SERVICE_URL = 'http://localhost:8000';
+
+app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
+  console.log('[Backend] /analyze-audio called');
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No audio file uploaded' });
+
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(req.file.path));
+
+    const pythonRes = await axios.post(`${PYTHON_SERVICE_URL}/analyze-audio`, formData, {
+      headers: { ...formData.getHeaders() }
+    });
+
+    // Clean up temporary file
+    fs.unlink(req.file.path, (err) => {
+      if (err) console.error('Error deleting temp file:', err);
+    });
+
+    res.json(pythonRes.data);
+  } catch (error) {
+    console.error('[Backend] Analysis failed:', error.message);
+    res.status(500).json({ error: 'Analysis failed' });
+  }
 });
 
 // Serve audio files statically

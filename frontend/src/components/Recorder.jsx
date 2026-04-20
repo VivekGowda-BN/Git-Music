@@ -194,22 +194,22 @@ function Recorder({ parentId, onSaved }) {
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className={`flex-grow h-[56px] rounded-xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl ${
+                className={`flex-grow h-[48px] rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg overflow-hidden box-border ${
                   isSaving 
-                    ? 'bg-[#1A1A1A] text-text-dim cursor-not-allowed border border-white/5' 
-                    : 'bg-gradient-to-r from-[#FF2E63] to-[#FF5F7E] text-white hover:scale-[1.01] active:scale-[0.99] shadow-[0_8px_20px_-6px_rgba(255,46,99,0.5)] hover:shadow-[0_12px_25px_-5px_rgba(255,46,99,0.6)]'
-                }`}
+                    ? 'bg-gradient-to-r from-[#ff2e63] to-[#ff5f7e] opacity-80 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-[#FF2E63] to-[#FF5F7E] hover:scale-[1.01] active:scale-[0.99] shadow-[0_8px_20px_-6px_rgba(255,46,99,0.5)]'
+                } text-white`}
               >
                 {isSaving ? (
-                  <>
-                    <div className="spinner" />
-                    <span>Processing...</span>
-                  </>
+                  <div className="flex items-center justify-center gap-2 text-sm font-medium whitespace-nowrap overflow-hidden">
+                    <div className="spinner flex-shrink-0" />
+                    <span className="truncate">Processing...</span>
+                  </div>
                 ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
+                  <div className="flex items-center justify-center gap-2 text-sm font-black uppercase tracking-widest">
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
                     <span>Save</span>
-                  </>
+                  </div>
                 )}
               </button>
             </div>

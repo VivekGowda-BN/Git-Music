@@ -5,6 +5,11 @@ const dbPath = path.join(__dirname, 'database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Error opening database', err.message);
+  } else {
+    // Enable foreign keys
+    db.run('PRAGMA foreign_keys = ON;', (err) => {
+      if (err) console.error('Error enabling foreign keys', err.message);
+    });
   }
 });
 

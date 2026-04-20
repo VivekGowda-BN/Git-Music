@@ -3,3 +3,6 @@ uvicorn==0.29.0
 pydantic==2.6.4
 requests==2.31.0
 python-multipart==0.0.9
+librosa==0.10.1
+numpy==1.26.4
+scipy==1.12.0
