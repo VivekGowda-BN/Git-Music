@@ -143,13 +143,13 @@ function AnalysePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-white pt-44 pb-20 px-4 sm:px-6 font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-background text-white pt-24 pb-20 px-4 sm:px-6 font-sans overflow-x-hidden">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-6 mb-12"
+          className="flex items-center gap-6 mb-8"
         >
           <button
             onClick={() => navigate('/')}
