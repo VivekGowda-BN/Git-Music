@@ -6,6 +6,7 @@ import { Mic, GitBranch, User } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import AnalysePage from './components/AnalysePage';
 import ComparePage from './components/ComparePage';
+import HomePage from './components/HomePage';
 
 const API_URL = 'http://localhost:3000';
 
@@ -172,16 +173,7 @@ function AppContent() {
       </header>
 
       <Routes>
-        <Route path="/" element={
-          <Dashboard 
-            recordings={recordings}
-            filteredRecordings={filteredRecordings}
-            selectedParentId={selectedParentId}
-            setSelectedParentId={setSelectedParentId}
-            handleRecordingSaved={handleRecordingSaved}
-            handleDelete={handleDelete}
-          />
-        } />
+        <Route path="/" element={<HomePage />} />
         <Route path="/dashboard" element={
           <Dashboard 
             recordings={recordings}

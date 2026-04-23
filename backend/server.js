@@ -279,7 +279,7 @@ app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
 // Serve audio files statically
 app.use('/audio', express.static(UPLOADS_DIR));
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Backend listening on port ${PORT}`);
 });
