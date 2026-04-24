@@ -250,7 +250,7 @@ app.get('/versions', (req, res) => {
   });
 });
 const FormData = require('form-data');
-const PYTHON_SERVICE_URL = 'http://localhost:8000';
+const PYTHON_SERVICE_URL = 'http://localhost:8001';
 
 app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
   console.log('[Backend] /analyze-audio called');
