@@ -313,13 +313,21 @@ async function generateTagsWithOllama(description, name = 'Untitled') {
   console.log(`[AI] Generating tags for: ${name}`);
   try {
     const prompt = `
-      Analyze this music recording:
+      Analyze this music recording based on its description. If the description is vague, infer plausible professional music production metadata for it.
       Name: ${name}
       Description: ${description}
       
-      Provide exactly 3 tags: mood, type, and energy.
-      Respond ONLY with a valid JSON object.
-      Example: {"mood": "calm", "type": "ambient", "energy": "low"}
+      You MUST provide exactly the following fields:
+      - "bpm": integer (e.g. 120)
+      - "key": string (e.g. "C Minor", "G Major")
+      - "mood": string (e.g. "Energetic", "Melancholic")
+      - "genre": string (e.g. "Synthwave", "Acoustic Folk")
+      - "instruments": array of strings (e.g. ["Synthesizer", "Drum Machine", "Bass"])
+      - "frequency_range": object with "low" (integer, e.g. 20) and "high" (integer, e.g. 20000)
+      - "energy": float between 0.0 and 1.0 (e.g. 0.85)
+
+      Respond ONLY with a valid JSON object matching these exact keys.
+      Example: {"bpm": 128, "key": "F Minor", "mood": "Dark", "genre": "Techno", "instruments": ["Kick", "Bass", "Hi-hat"], "frequency_range": {"low": 20, "high": 18000}, "energy": 0.9}
     `;
 
     const response = await axios.post('http://localhost:11434/api/generate', {
@@ -329,16 +337,19 @@ async function generateTagsWithOllama(description, name = 'Untitled') {
       format: 'json'
     });
 
-    // Ollama returns { response: "..." } where response is the stringified JSON
     const result = JSON.parse(response.data.response);
     console.log('[AI] Generated tags:', result);
     return result;
   } catch (error) {
     console.error('[AI] Ollama error:', error.message);
     return { 
-      mood: description.includes('chill') ? 'chill' : 'unknown', 
-      type: 'unknown', 
-      energy: 'medium',
+      bpm: 120,
+      key: "C Major",
+      mood: description.includes('chill') ? 'Chill' : 'Unknown', 
+      genre: 'Unknown',
+      instruments: ["Unknown"],
+      frequency_range: { low: 20, high: 20000 },
+      energy: 0.5,
       error: 'AI unavailable'
     };
   }

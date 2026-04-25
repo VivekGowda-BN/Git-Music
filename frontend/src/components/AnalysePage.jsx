@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mic, Square, Upload, Activity, Music,
   Layers, ChevronLeft, Loader, CheckCircle,
-  Zap, Play, Pause, Trash2
+  Zap, Play, Pause, Trash2, Plus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
 
 const API_URL = 'http://localhost:3000';
 
@@ -20,6 +21,10 @@ function AnalysePage() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [userProjects, setUserProjects] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const waveformRef = useRef(null);
   const wavesurferRef = useRef(null);
@@ -84,6 +89,7 @@ function AnalysePage() {
       setIsRecording(true);
       setError(null);
       setResults(null);
+      setSaveSuccess(false);
     } catch (err) {
       console.error('Recording error:', err);
       setError('Microphone access denied. Please check permissions.');
@@ -104,6 +110,7 @@ function AnalysePage() {
       setAudioUrl(URL.createObjectURL(file));
       setResults(null);
       setError(null);
+      setSaveSuccess(false);
     }
   };
 
@@ -112,6 +119,7 @@ function AnalysePage() {
 
     setIsAnalysing(true);
     setError(null);
+    setSaveSuccess(false);
 
     const formData = new FormData();
     formData.append('audio', audioBlob, audioBlob.name || 'recording.webm');
@@ -129,6 +137,51 @@ function AnalysePage() {
     }
   };
 
+  const handleSaveClick = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await axios.get(`${API_URL}/my-projects`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserProjects(res.data);
+      setShowProjectModal(true);
+    } catch (err) {
+      console.error('Failed to fetch projects', err);
+      setError('Failed to load projects. Please try logging in again.');
+    }
+  };
+
+  const saveToProject = async (projectId) => {
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('access_token');
+      await axios.post(`${API_URL}/versions`, {
+        project_id: projectId,
+        bpm: results.bpm,
+        key: results.key,
+        mood: results.mood,
+        genre: results.genre,
+        instruments: Array.isArray(results.instruments) ? results.instruments.join(', ') : results.instruments,
+        freq_min: results.frequency_range?.low || 20,
+        freq_max: results.frequency_range?.high || 20000,
+        file_url: audioBlob.name || 'analyzed_audio.webm' // Temporary mock URL
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setSaveSuccess(true);
+      setShowProjectModal(false);
+      setTimeout(() => navigate('/dashboard'), 1500);
+    } catch (err) {
+      console.error('Save version error:', err);
+      setError(err.response?.data?.error || 'Failed to save version.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const togglePlay = () => {
     if (wavesurferRef.current) {
       wavesurferRef.current.playPause();
@@ -139,11 +192,12 @@ function AnalysePage() {
     setAudioBlob(null);
     setAudioUrl(null);
     setResults(null);
+    setSaveSuccess(false);
     if (wavesurferRef.current) wavesurferRef.current.destroy();
   };
 
   return (
-    <div className="min-h-screen bg-background text-white pt-24 pb-20 px-4 sm:px-6 font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-background text-white pt-24 pb-20 px-4 sm:px-6 font-sans overflow-x-hidden relative">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <motion.header
@@ -276,6 +330,20 @@ function AnalysePage() {
             </div>
           </motion.div>
 
+          {/* Success Message */}
+          <AnimatePresence>
+            {saveSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-5 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-500 text-[11px] font-black uppercase tracking-widest flex items-center gap-3"
+              >
+                <CheckCircle className="w-5 h-5" />
+                Version saved successfully! Redirecting...
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Error Message */}
           <AnimatePresence>
             {error && (
@@ -291,61 +359,125 @@ function AnalysePage() {
             )}
           </AnimatePresence>
 
-          {/* Results Grid */}
+          {/* Results Grid & Save Button */}
           <AnimatePresence mode="wait">
             {results && (
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                className="space-y-8"
               >
-                <ResultCard
-                  label="Tempo"
-                  value={`${results.bpm} BPM`}
-                  sub={`Energy: ${Math.round((results.energy || 0) * 100)}%`}
-                  Icon={Zap}
-                  iconColor="text-primary"
-                />
-                <ResultCard
-                  label="Musical Key"
-                  value={results.key}
-                  sub="Scale Harmony"
-                  Icon={Music}
-                  iconColor="text-accent"
-                />
-                <ResultCard
-                  label="Mood"
-                  value={results.mood || "Unknown"}
-                  sub="Emotional Tone"
-                  Icon={Activity}
-                  iconColor="text-yellow-400"
-                />
-                <ResultCard
-                  label="Genre"
-                  value={results.genre || "Unknown"}
-                  sub="Stylistic Profile"
-                  Icon={Layers}
-                  iconColor="text-emerald-400"
-                />
-                <ResultCard
-                  label="Instruments"
-                  value={Array.isArray(results.instruments) ? results.instruments.join(', ') : (results.instruments || "Unknown")}
-                  sub="Spectral Signature"
-                  Icon={Mic}
-                  iconColor="text-orange-400"
-                />
-                <ResultCard
-                  label="Freq Range"
-                  value={results.frequency_range ? `${results.frequency_range.low} - ${results.frequency_range.high} Hz` : "20 - 20k Hz"}
-                  sub="Spectral Width"
-                  Icon={Zap}
-                  iconColor="text-sky-400"
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <ResultCard
+                    label="Tempo"
+                    value={`${results.bpm} BPM`}
+                    sub={`Energy: ${Math.round((results.energy || 0) * 100)}%`}
+                    Icon={Zap}
+                    iconColor="text-primary"
+                  />
+                  <ResultCard
+                    label="Musical Key"
+                    value={results.key}
+                    sub="Scale Harmony"
+                    Icon={Music}
+                    iconColor="text-accent"
+                  />
+                  <ResultCard
+                    label="Mood"
+                    value={results.mood || "Unknown"}
+                    sub="Emotional Tone"
+                    Icon={Activity}
+                    iconColor="text-yellow-400"
+                  />
+                  <ResultCard
+                    label="Genre"
+                    value={results.genre || "Unknown"}
+                    sub="Stylistic Profile"
+                    Icon={Layers}
+                    iconColor="text-emerald-400"
+                  />
+                  <ResultCard
+                    label="Instruments"
+                    value={Array.isArray(results.instruments) ? results.instruments.join(', ') : (results.instruments || "Unknown")}
+                    sub="Spectral Signature"
+                    Icon={Mic}
+                    iconColor="text-orange-400"
+                  />
+                  <ResultCard
+                    label="Freq Range"
+                    value={results.frequency_range ? `${results.frequency_range.low} - ${results.frequency_range.high} Hz` : "20 - 20k Hz"}
+                    sub="Spectral Width"
+                    Icon={Zap}
+                    iconColor="text-sky-400"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSaveClick}
+                  className="w-full h-20 bg-white/5 border border-white/10 hover:bg-white/10 rounded-[32px] font-black uppercase tracking-[0.4em] text-xs text-white transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 group"
+                >
+                  <CheckCircle className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+                  Save to Project Repository
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Project Selection Modal */}
+      <AnimatePresence>
+        {showProjectModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-black/60">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass-panel w-full max-w-md p-8 rounded-[40px] border border-white/10 shadow-2xl"
+            >
+              <h2 className="text-xl font-black mb-6 text-white uppercase tracking-tight flex items-center gap-3">
+                <Plus className="w-6 h-6 text-primary" /> Select Repository
+              </h2>
+              
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                {userProjects.length === 0 ? (
+                  <div className="py-10 text-center opacity-40">
+                    <p className="text-xs font-bold uppercase tracking-widest mb-4">No projects found</p>
+                    <button 
+                      onClick={() => navigate('/dashboard')}
+                      className="text-[10px] font-black text-primary uppercase underline underline-offset-4"
+                    >
+                      Create one in Dashboard
+                    </button>
+                  </div>
+                ) : (
+                  userProjects.map(project => (
+                    <button
+                      key={project.id}
+                      onClick={() => saveToProject(project.id)}
+                      disabled={isSaving}
+                      className="w-full p-5 bg-white/5 border border-white/5 rounded-3xl hover:bg-primary/10 hover:border-primary/30 transition-all text-left flex items-center justify-between group"
+                    >
+                      <div>
+                        <div className="text-sm font-black text-white group-hover:text-primary transition-colors">{project.title}</div>
+                        <div className="text-[9px] font-bold text-text-dim uppercase tracking-widest mt-1">ID: {project.id}</div>
+                      </div>
+                      <ChevronLeft className="w-4 h-4 rotate-180 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
+                    </button>
+                  ))
+                )}
+              </div>
+
+              <button
+                onClick={() => setShowProjectModal(false)}
+                className="w-full mt-8 py-4 text-xs font-black text-text-dim uppercase tracking-widest hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
