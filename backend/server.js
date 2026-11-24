@@ -125,6 +125,20 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// Authenticated current-user endpoint
+app.get('/me', authenticateUser, (req, res) => {
+  db.get('SELECT id, username, email, created_at FROM users WHERE id = ?', [req.user_id], (err, user) => {
+    if (err) {
+      console.error('[Me] DB Error:', err.message);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  });
+});
+
 // Debug & Verification Routes (Temporary)
 app.get('/debug/tables', (req, res) => {
   console.log('[Debug] Listing tables');

@@ -1,4 +1,8 @@
-# SwarLab
+# SwarHub
+
+The active React frontend starts at `frontend/src/main.jsx`. See the [SwarHub project knowledge graph](docs/swarhub-graph.md) for routes, data flows, storage and source ownership. To open the local studio, run `npm run dev` from `frontend`.
+
+## Earlier SwarLab project notes
 
 **SwarLab** is a free-to-use modern music creation laboratory and version control platform for artists and producers. Capture ideas on the fly, analyze musical attributes with AI, organize layered takes in Git-inspired visual branch trees, and discover real-world music opportunities.
 

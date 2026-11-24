@@ -1,0 +1,730 @@
+{
+  "nodes": [
+    {
+      "id": "backend/db.js",
+      "group": "backend"
+    },
+    {
+      "id": "backend/middleware/authMiddleware.js",
+      "group": "backend"
+    },
+    {
+      "id": "backend/server.js",
+      "group": "backend"
+    },
+    {
+      "id": "backend/utils/auth.js",
+      "group": "backend"
+    },
+    {
+      "id": "frontend/eslint.config.js",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/postcss.config.js",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/src/App.css",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/App.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/AnalysePage.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/ComparePage.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/HomePage.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/LoginPage.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/Recorder.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/SignupPage.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/VersionTree.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/shell/MobileNav.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/shell/NavBar.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/shell/PageContainer.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/components/shell/ProfileAuthPill.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/index.css",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/lib/api.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/main.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/pages/AnalysePage.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/pages/CapturePage.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/pages/OpportunitiesPage.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/pages/ProfilePage.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Auth.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Avatar.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Capture.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Cassette.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Contributions.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Dashboard.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Feed.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/FrequencyRing.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Home.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/ListeningDesk.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Portfolio.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Poster.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/Studio.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/TakeAnalysis.jsx",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/audio.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/community.css",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/featured.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/home.css",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/library.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/playback.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/song.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/spectrum.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/studio.css",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/workspace.css",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/tailwind.config.js",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/vite.config.js",
+      "group": "frontend"
+    },
+    {
+      "id": "scratch/inspect_db.js",
+      "group": "scratch"
+    },
+    {
+      "id": "GET /",
+      "group": "endpoint"
+    },
+    {
+      "id": "GET /health",
+      "group": "endpoint"
+    },
+    {
+      "id": "POST /signup",
+      "group": "endpoint"
+    },
+    {
+      "id": "POST /login",
+      "group": "endpoint"
+    },
+    {
+      "id": "GET /me",
+      "group": "endpoint"
+    },
+    {
+      "id": "GET /debug/tables",
+      "group": "endpoint"
+    },
+    {
+      "id": "GET /debug/users",
+      "group": "endpoint"
+    },
+    {
+      "id": "POST /projects",
+      "group": "endpoint"
+    },
+    {
+      "id": "GET /my-projects",
+      "group": "endpoint"
+    },
+    {
+      "id": "POST /versions",
+      "group": "endpoint"
+    },
+    {
+      "id": "GET /projects/:id/versions",
+      "group": "endpoint"
+    },
+    {
+      "id": "POST /upload",
+      "group": "endpoint"
+    },
+    {
+      "id": "POST /analyze-description",
+      "group": "endpoint"
+    },
+    {
+      "id": "POST /record",
+      "group": "endpoint"
+    },
+    {
+      "id": "POST /branch",
+      "group": "endpoint"
+    },
+    {
+      "id": "DELETE /recordings/:id",
+      "group": "endpoint"
+    },
+    {
+      "id": "GET /versions",
+      "group": "endpoint"
+    },
+    {
+      "id": "POST /analyze-audio",
+      "group": "endpoint"
+    }
+  ],
+  "edges": [
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/components/Recorder.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/components/VersionTree.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/components/AnalysePage.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/components/ComparePage.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/components/HomePage.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/components/LoginPage.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/components/SignupPage.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/components/shell/NavBar.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/pages/CapturePage.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/pages/OpportunitiesPage.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/App.jsx",
+      "to": "frontend/src/pages/ProfilePage.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/ComparePage.jsx",
+      "to": "frontend/src/components/shell/PageContainer.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/HomePage.jsx",
+      "to": "frontend/src/components/shell/PageContainer.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/LoginPage.jsx",
+      "to": "frontend/src/components/shell/PageContainer.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/LoginPage.jsx",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/shell/MobileNav.jsx",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/shell/NavBar.jsx",
+      "to": "frontend/src/components/shell/ProfileAuthPill.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/shell/NavBar.jsx",
+      "to": "frontend/src/components/shell/MobileNav.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/shell/ProfileAuthPill.jsx",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/SignupPage.jsx",
+      "to": "frontend/src/components/shell/PageContainer.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/components/SignupPage.jsx",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/main.jsx",
+      "to": "frontend/src/studio/studio.css",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/main.jsx",
+      "to": "frontend/src/studio/workspace.css",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/main.jsx",
+      "to": "frontend/src/studio/community.css",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/main.jsx",
+      "to": "frontend/src/studio/home.css",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/main.jsx",
+      "to": "frontend/src/studio/Studio.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/pages/CapturePage.jsx",
+      "to": "frontend/src/components/shell/PageContainer.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/pages/CapturePage.jsx",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/pages/OpportunitiesPage.jsx",
+      "to": "frontend/src/components/shell/PageContainer.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/pages/ProfilePage.jsx",
+      "to": "frontend/src/components/shell/PageContainer.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/pages/ProfilePage.jsx",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/audio.js",
+      "to": "frontend/src/studio/song.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/audio.js",
+      "to": "frontend/src/studio/spectrum.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Auth.jsx",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Capture.jsx",
+      "to": "frontend/src/studio/audio.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Capture.jsx",
+      "to": "frontend/src/studio/library.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Capture.jsx",
+      "to": "frontend/src/studio/Home.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Capture.jsx",
+      "to": "frontend/src/studio/TakeAnalysis.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Capture.jsx",
+      "to": "frontend/src/studio/FrequencyRing.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Dashboard.jsx",
+      "to": "frontend/src/studio/audio.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Dashboard.jsx",
+      "to": "frontend/src/studio/playback.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Dashboard.jsx",
+      "to": "frontend/src/studio/TakeAnalysis.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Feed.jsx",
+      "to": "frontend/src/studio/Avatar.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Home.jsx",
+      "to": "frontend/src/studio/ListeningDesk.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/library.js",
+      "to": "frontend/src/studio/song.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/ListeningDesk.jsx",
+      "to": "frontend/src/studio/Cassette.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/ListeningDesk.jsx",
+      "to": "frontend/src/studio/featured.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/playback.js",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/playback.js",
+      "to": "frontend/src/studio/audio.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/playback.js",
+      "to": "frontend/src/studio/library.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Portfolio.jsx",
+      "to": "frontend/src/studio/library.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Portfolio.jsx",
+      "to": "frontend/src/studio/Dashboard.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Portfolio.jsx",
+      "to": "frontend/src/studio/playback.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Portfolio.jsx",
+      "to": "frontend/src/studio/Contributions.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Portfolio.jsx",
+      "to": "frontend/src/studio/Poster.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/Home.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/Capture.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/Dashboard.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/Portfolio.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/library.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/Feed.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/Auth.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/featured.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/TakeAnalysis.jsx",
+      "to": "frontend/src/studio/audio.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/TakeAnalysis.jsx",
+      "to": "frontend/src/studio/library.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/TakeAnalysis.jsx",
+      "to": "frontend/src/studio/playback.js",
+      "relation": "imports"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "backend/db.js",
+      "relation": "imports"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "backend/utils/auth.js",
+      "relation": "imports"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "backend/middleware/authMiddleware.js",
+      "relation": "imports"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "GET /",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "GET /health",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "POST /signup",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "POST /login",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "GET /me",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "GET /debug/tables",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "GET /debug/users",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "POST /projects",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "GET /my-projects",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "POST /versions",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "GET /projects/:id/versions",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "POST /upload",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "POST /analyze-description",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "POST /record",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "POST /branch",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "DELETE /recordings/:id",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "GET /versions",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "POST /analyze-audio",
+      "relation": "serves"
+    }
+  ]
+}

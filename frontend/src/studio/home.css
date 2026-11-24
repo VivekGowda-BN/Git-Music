@@ -1,0 +1,114 @@
+/* Home: a compact hero, the idea behind SwarHub, then a guide to the app. */
+.home-hero {
+  min-height:0;
+  padding-block:clamp(22px,3.2vw,46px) clamp(44px,6vw,88px);
+}
+.home-hero .hero-grid {padding:0;gap:clamp(26px,5vw,90px)}
+.home-hero .hero-copy>p {max-width:440px}
+.listening-desk {background:#e5e2db;border-color:#bfbcb3;box-shadow:0 2px 0 #c5c0b7,0 18px 38px -24px #29242969}
+.listening-desk .monitor-head {display:flex;padding:13px 17px;border-color:#c8c6c0;color:#5e5a5c;font:11px var(--mono);letter-spacing:.02em}
+.listening-desk .tape-stage {
+  perspective:850px;
+  background-color:#d9d6ca;
+  background-image:radial-gradient(#98958570 .8px,transparent 1px);
+  background-size:9px 9px;
+}
+.listening-desk .tape-stage:before {background:radial-gradient(ellipse at 40% 20%,#fff9e78a,transparent 72%)}
+.listening-desk .cassette {
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) rotateZ(-6deg);
+  transition:transform .22s ease-out;
+}
+.listening-desk .transport {background:#f8f6ef;border-color:#c3c1b9}
+.listening-desk .round-play {background:#282833;box-shadow:0 2px 0 #12121b}.listening-desk .round-play:hover {background:#994229}
+.listening-desk .track-info strong {font-size:15px}.listening-desk .track-info small {display:block;font-size:12px;color:#68656a;margin-top:2px}
+.desk-volume {display:flex;align-items:center;gap:7px;margin-left:auto;padding-left:11px;border-left:1px solid #d8d3c9}
+.volume-toggle {display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;color:#514d47;transition:background .18s,color .18s}
+.volume-toggle:hover,.volume-toggle[aria-pressed=true] {background:#e9e4d8;color:#994229}
+.desk-volume .volume-slider {width:70px;height:16px;min-height:0;padding:0;border:0;background:transparent;appearance:none;cursor:pointer}
+.desk-volume .volume-slider::-webkit-slider-runnable-track {height:5px;border-radius:999px;background:linear-gradient(90deg,var(--rust) 0 var(--vol,100%),#d8d3c9 var(--vol,100%) 100%)}
+.desk-volume .volume-slider::-webkit-slider-thumb {appearance:none;width:11px;height:11px;margin-top:-3px;border-radius:50%;background:#9d3f28;border:2px solid #fbf8ef;box-shadow:0 1px 2px #2c211a40}
+.desk-volume .volume-slider::-moz-range-track {height:5px;border-radius:999px;background:linear-gradient(90deg,var(--rust) 0 var(--vol,100%),#d8d3c9 var(--vol,100%) 100%)}
+.desk-volume .volume-slider::-moz-range-thumb {width:8px;height:8px;border-radius:50%;background:#9d3f28;border:2px solid #fbf8ef;box-shadow:0 1px 2px #2c211a40}
+.listening-desk>audio {display:none}
+.player-status {background:#fffaf0;padding:12px 16px;font-size:13px;color:#665954;border-top:1px solid #d2c8ba}
+.player-status>div {display:flex;align-items:center;gap:15px;flex-wrap:wrap;margin-top:5px}.player-status a,.player-status button {display:inline-flex;align-items:center;gap:4px;min-height:28px;padding:0;color:var(--rust);text-decoration:underline;text-underline-offset:3px}
+
+/* The editorial explanation of what SwarHub is and who it serves. */
+.about-swarhub {position:relative;overflow:hidden;padding:clamp(62px,8vw,118px) 0;background:#f1eee5;border-top:1px solid #ded9cd}
+.about-swarhub:before {content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 88% 8%,#d9b99a45,transparent 40%),radial-gradient(ellipse at 4% 92%,#b7c7ae3d,transparent 38%)}
+.about-swarhub>.wrap {position:relative;z-index:1}
+.about-lead {display:grid;grid-template-columns:1.06fr .94fr;gap:clamp(28px,7vw,112px);align-items:end;margin-bottom:clamp(38px,5vw,66px)}
+.about-lead .eyebrow {display:block;color:#8b5a43;margin-bottom:18px}
+.about-lead h2 {font:400 clamp(40px,4.8vw,74px)/1.025 Georgia,serif;letter-spacing:-.06em;margin:0}
+.about-lead h2 em {color:#a14930}
+.about-lead p {max-width:520px;margin:0 0 5px;font-size:16.5px;line-height:1.72;color:#5d5a54}
+.about-ledger {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #c9c3b6}
+.about-entry {position:relative;padding:clamp(21px,2.5vw,32px) clamp(16px,2.4vw,31px) clamp(25px,3vw,38px);border-right:1px solid #d3cdc0;transition:background .2s,transform .2s}
+.about-entry:last-child {border-right:0}
+.about-entry-top {display:flex;align-items:center;justify-content:space-between;gap:10px;color:#9a5a43}
+.about-entry-top span {font:11px var(--mono);letter-spacing:.13em}
+.about-entry h3 {font:400 clamp(24px,2.2vw,33px)/1.15 Georgia,serif;letter-spacing:-.04em;margin:21px 0 10px}
+.about-entry p {max-width:365px;margin:0;font-size:14.5px;line-height:1.7;color:#625f59}
+.about-thread {position:absolute;left:0;bottom:0;width:0;height:2px;background:#a14930;transition:width .32s ease}
+.about-entry:hover .about-thread,.about-entry:focus-within .about-thread {width:100%}
+
+/* A plain-language map of the four rooms in the app. */
+.studio-directory {position:relative;overflow:hidden;padding:clamp(54px,7vw,96px) 0 clamp(60px,8vw,108px);background:#fbfaf5;border-top:1px solid #ded9cd}
+.studio-directory:after {content:"";position:absolute;right:-9%;top:-35%;width:44%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#d9c9b02e,transparent 68%);pointer-events:none}
+.directory-layout {position:relative;z-index:1;display:grid;grid-template-columns:minmax(230px,.7fr) minmax(0,1.3fr);gap:clamp(30px,7vw,108px);align-items:start}
+.directory-copy {position:sticky;top:112px}
+.directory-copy .eyebrow {display:block;color:#8b5a43;margin-bottom:16px}
+.directory-copy h2 {font:400 clamp(40px,4.4vw,68px)/1.02 Georgia,serif;letter-spacing:-.058em;margin:0 0 18px}
+.directory-copy h2 em {color:#3f6249}
+.directory-copy p {max-width:330px;margin:0;font-size:15px;line-height:1.7;color:#5f5c55}
+.directory-list {display:grid;border-top:1px solid #cfc9bc}
+.directory-row {position:relative;display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:clamp(12px,1.6vw,20px);padding:clamp(16px,2vw,22px) clamp(8px,1.4vw,16px);border-bottom:1px solid #d8d3c7;border-radius:10px;isolation:isolate;transition:padding .22s ease}
+.directory-row:before {content:"";position:absolute;inset:2px 0;z-index:-1;border-radius:10px;background:#f1ede1;opacity:0;transform:scaleX(.985);transition:opacity .22s,transform .22s}
+.directory-number {font:10.5px var(--mono);letter-spacing:.12em;color:#a49d8f;transition:color .2s}
+.directory-icon {display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#ece7da;color:#8b5a43;transition:background .22s,color .22s,transform .22s}
+.directory-text strong {display:block;font:400 clamp(20px,1.9vw,25px)/1.15 Georgia,serif;letter-spacing:-.035em;color:#2f2c31}
+.directory-text small {display:block;margin-top:3px;font-size:13px;line-height:1.5;color:#706c66}
+.directory-arrow {color:#a49d8f;transition:transform .22s,color .22s}
+.directory-row:hover {padding-left:clamp(14px,2vw,24px)}
+.directory-row:hover:before {opacity:1;transform:none}
+.directory-row:hover .directory-number {color:#8b5a43}
+.directory-row:hover .directory-icon {background:#2f3d33;color:#f6efdf;transform:rotate(-4deg)}
+.directory-row:hover .directory-arrow {color:#8b3d2a;transform:translate(3px,-3px)}
+.glass-nav .avatar-link[aria-current=page] img {box-shadow:0 0 0 2px #fcfbf8,0 0 0 3px #b4765a}
+
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+  .about-entry:hover {background:#f8f5ec;transform:translateY(-3px)}
+  .sleeve-card .sleeve-art i,.brief .poster {transition:transform .32s ease-out}
+  .sleeve-card:hover .ink-0 i,.sleeve-card:hover .ink-2 i {transform:scale(1.035) translateX(-3px)}
+  .sleeve-card:hover .ink-1 i {transform:rotate(34deg) translateX(-3px)}
+  .brief:hover .poster {transform:scale(1.018)}.profile-cards article {transition:box-shadow .18s,border-color .18s}.profile-cards article:hover {box-shadow:0 3px 11px #34322a10;border-color:#b4b1ac}
+}
+@media (max-width:900px) {
+  .directory-layout {grid-template-columns:1fr;gap:26px}
+  .directory-copy {position:static}
+  .directory-copy p {max-width:520px}
+}
+@media (max-width:800px) {
+  .home-hero {padding-block:26px 40px}
+  .home-hero .hero-grid {gap:30px}
+  .about-lead {grid-template-columns:1fr;gap:18px;align-items:start}
+  .about-ledger {grid-template-columns:1fr}
+  .about-entry {border-right:0;border-bottom:1px solid #d3cdc0}
+  .about-entry:last-child {border-bottom:0}
+}
+@media (max-width:540px) {
+  .home-hero {padding-block:22px 38px}
+  .home-hero .hero-grid {gap:23px}
+  .desk-volume {gap:4px;padding-left:7px}
+  .volume-toggle {width:26px;height:26px}
+  .desk-volume .volume-slider {width:52px}
+  .about-swarhub {padding-block:48px}
+  .about-entry p {font-size:14px}
+  .studio-directory {padding-block:46px 56px}
+  .directory-row {grid-template-columns:auto auto minmax(0,1fr);gap:11px;padding:15px 4px}
+  .directory-row:hover {padding-left:4px}
+  .directory-text small {font-size:12.5px}
+  .directory-arrow {display:none}
+  .directory-icon {width:34px;height:34px}
+}
+@media (prefers-reduced-motion:reduce){.listening-desk .cassette {transform:rotate(-6deg)}}

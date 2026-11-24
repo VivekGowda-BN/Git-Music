@@ -7,6 +7,8 @@
 
 ## 0. First-Things-First Protocol
 
+For the active SwarHub frontend, start with [the project knowledge graph](swarhub-graph.md). Follow its file and data-flow edges for the task at hand. The older generated graph below describes the previous frontend.
+
 Before any codebase exploration, run:
 ```bash
 graphify query "<your question>"

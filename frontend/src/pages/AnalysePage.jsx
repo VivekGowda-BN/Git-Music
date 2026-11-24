@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Square, Upload, Play, BarChart2, Activity, Music, Zap, Clock, Info, ArrowLeft } from 'lucide-react';

@@ -1,26 +1,39 @@
 import React from 'react';
-import { GitBranch } from 'lucide-react';
+import { GitBranch, Wrench } from 'lucide-react';
+import PageContainer from './shell/PageContainer';
 
-function ComparePage() {
+export default function ComparePage() {
   return (
-    <div className="pt-24 min-h-[600px] flex flex-col items-center justify-center text-center">
-      <div className="glass-panel p-12 rounded-3xl max-w-2xl w-full">
-        <GitBranch className="w-16 h-16 mx-auto mb-6 text-primary animate-pulse" />
-        <h2 className="text-3xl font-bold mb-4 text-white">Audio Comparison</h2>
-        <p className="text-text-dim mb-8">
-          Select two recordings from your version tree to compare their wave patterns, tags, and AI analysis.
-        </p>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="border border-dashed border-border-dim rounded-2xl p-8 text-sm opacity-50">
-            Drop first recording here
+    <PageContainer>
+      <div className="min-h-[500px] flex flex-col items-center justify-center text-center">
+        <div className="studio-card p-8 sm:p-12 max-w-xl w-full">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-surface-utility border border-border-dim flex items-center justify-center text-accent">
+            <GitBranch className="w-6 h-6 animate-pulse" />
           </div>
-          <div className="border border-dashed border-border-dim rounded-2xl p-8 text-sm opacity-50">
-            Drop second recording here
+
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-mono font-medium mb-3">
+            <Wrench className="w-3 h-3" />
+            <span>In Development</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight mb-2">
+            Audio Comparison
+          </h1>
+
+          <p className="text-text-dim text-xs max-w-md mx-auto mb-6 leading-relaxed">
+            Side-by-side waveform analysis and acoustic frequency diffing between recording takes will be introduced in an upcoming milestone.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="border border-dashed border-border-dim rounded-xl p-5 text-xs text-text-muted bg-surface-muted">
+              Take A Placement
+            </div>
+            <div className="border border-dashed border-border-dim rounded-xl p-5 text-xs text-text-muted bg-surface-muted">
+              Take B Placement
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
-
-export default ComparePage;

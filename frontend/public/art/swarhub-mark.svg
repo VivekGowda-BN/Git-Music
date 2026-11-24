@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>SwarHub — branching record note</title>
+  <rect x="1" y="1" width="62" height="62" rx="16" fill="#aa4029"/>
+  <g fill="#fff2d6">
+    <path d="M32 40V16.5l18-5v9l-12 3v7c3-3 6-4 11-4v5.5c-6.4 0-10 4-11 9.5z"/>
+    <circle cx="25" cy="42" r="14.5"/>
+  </g>
+  <circle cx="25" cy="42" r="5.5" fill="#aa4029"/><circle cx="25" cy="42" r="1.5" fill="#fff2d6"/>
+  <path d="M15.3 41.8a9.7 9.7 0 0 1 8.2-9.4M34 44a9.5 9.5 0 0 1-7.5 7.3" fill="none" stroke="#aa4029" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

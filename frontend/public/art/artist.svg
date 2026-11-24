@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
+  <title>Studio artist wearing headphones</title>
+  <defs><pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#624c2d" opacity=".3"/></pattern></defs>
+  <rect width="160" height="160" fill="#dca655"/><circle cx="82" cy="77" r="66" fill="#f0ca83"/>
+  <rect width="160" height="160" fill="url(#dots)"/>
+  <path d="M10 160q7-36 48-44l21-5 23 4q39 6 50 45" fill="#454e40" stroke="#373b30" stroke-width="3"/>
+  <path d="M61 105l1 17 17 14 20-17-3-25" fill="#aa694b" stroke="#4a382d" stroke-width="2.5"/>
+  <path d="M44 65q-1-37 34-42 41-4 42 37l-6 28-10 16q-9 11-21 12-18-1-29-17l-8-21z" fill="#c88a60" stroke="#45362c" stroke-width="2.5"/>
+  <path d="M41 78q-8-10-6-26 1-9 6-15-3-10 8-16 8-7 16-6 10-8 21-5 14-1 23 7 19 5 20 20 9 15-3 33l-7 10-5-25-8-13q-14 5-21 1-13 8-23 6-9 14-16 13l-1 20z" fill="#33392f"/>
+  <g fill="none" stroke="#42362b" stroke-linecap="round"><path d="M61 68q7-4 14-2m17-2q7-3 13 0" stroke-width="3"/><path d="M85 71l-3 13 5 1m-11 12q9 4 17-2" stroke-width="2.3"/></g>
+  <g fill="#38362c"><ellipse cx="69" cy="73" rx="2" ry="2.4"/><ellipse cx="98" cy="70" rx="2" ry="2.4"/></g>
+  <path d="M40 75Q27 23 71 17q42-11 55 30l1 22" fill="none" stroke="#202b27" stroke-width="7"/>
+  <path d="M40 72Q32 26 71 20q43-11 53 28" fill="none" stroke="#bfc4a5" stroke-width="2.5"/>
+  <g fill="#383f35" stroke="#1f2a23" stroke-width="3"><rect x="36" y="63" width="15" height="31" rx="7" transform="rotate(-11 43 78)"/><rect x="116" y="59" width="13" height="30" rx="6" transform="rotate(9 122 74)"/></g>
+  <path d="M42 87q2 15 14 27t16 46" fill="none" stroke="#272d24" stroke-width="2.5"/><path d="M57 119l15 28 9-12 9 10 16-27" fill="#71816a" stroke="#333c32" stroke-width="2"/>
+</svg>
