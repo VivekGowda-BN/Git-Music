@@ -5,6 +5,20 @@ export const checkedAt = '25 Nov 2026';
 
 export const opportunityTypes = ['All', 'Gigs', 'Band openings', 'Jams', 'Collabs', 'Castings'];
 
+// Local copies of each platform mark, kept small and served from /public so the
+// board never hotlinks a remote image or exposes a visitor to a third-party CDN.
+export const platformIcons = {
+  BandMate: '/art/platforms/bandmate.png',
+  MyRangManch: '/art/platforms/myrangmanch.png',
+  StarClinch: '/art/platforms/starclinch.png',
+  Talentrack: '/art/platforms/talentrack.png',
+  Rockerstop: '/art/platforms/rockerstop.png',
+  'Prasar Bharati / AIR': '/art/platforms/prasarbharati.png',
+  'KJ Motion Pictures': '/art/platforms/kjmotion.png',
+  'Entertainers Worldwide': '/art/platforms/entertainers.png',
+  'Facebook groups': '/art/platforms/facebook.png',
+};
+
 export const opportunities = [
   {
     id: 'mumbai-lead-guitarist',

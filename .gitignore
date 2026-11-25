@@ -1,0 +1,40 @@
+# Dependencies, builds, and local test output
+node_modules/
+dist/
+dist-ssr/
+coverage/
+.vite/
+.playwright-mcp/
+playwright-report/
+test-results/
+/graphify-out/
+*.log
+__pycache__/
+
+# Credentials and machine-specific configuration (commit placeholders only)
+.env
+.env.*
+!.env.example
+!.env.template
+.npmrc
+.secrets/
+secrets/
+credentials.json
+service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Runtime data and private recordings
+uploads/
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.db
+*.db-*
+
+# OS metadata
+desktop.ini
+Thumbs.db
+.DS_Store

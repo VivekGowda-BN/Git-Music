@@ -10,7 +10,7 @@ const { hashPassword, comparePassword } = require('./utils/auth');
 const jwt = require('jsonwebtoken');
 const authenticateUser = require('./middleware/authMiddleware');
 
-const JWT_SECRET = 'secret123';
+const JWT_SECRET = require('./jwtSecret');
 
 const app = express();
 app.use(cors());

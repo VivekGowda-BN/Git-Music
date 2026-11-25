@@ -1,10 +1,11 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {Link,useNavigate,useOutletContext} from 'react-router-dom';
-import {ArrowUpRight,BookOpen,Clock3,GitFork,Headphones,Link2,MapPin,Music2,NotebookPen,SlidersHorizontal,Users} from 'lucide-react';
+import {ArrowUpRight,BookOpen,GitFork,Headphones,Link2,MapPin,Music2,NotebookPen,SlidersHorizontal,Users} from 'lucide-react';
+import {motion,useReducedMotion,useSpring} from 'framer-motion';
 import {Topology} from './Dashboard';
 import {audioSource} from './playback';
 import Contributions from './Contributions';
-import {checkedAt,opportunities,opportunityTypes,sources} from './opportunities';
+import {opportunities,opportunityTypes,platformIcons,sources} from './opportunities';
 
 function ListeningRoom({project}){
   const [id,setId]=useState(project.takes[0]?.id),[src,setSrc]=useState(''),[error,setError]=useState('');
@@ -17,34 +18,55 @@ function ListeningRoom({project}){
   return take?<><Topology takes={project.takes} selected={id} select={setId}/><div className="inset"><label>{take.name}{src&&<audio controls src={src}/>}</label>{error&&<p role="status">{error}</p>}</div></>:<p className="inset">No recorded takes yet.</p>;
 }
 
+const coverPhotos={Guitar:'strings',Bass:'strings',Keys:'keys',Dholak:'percussion',Vocals:'vocals'};
+
+function OpportunityCard({call,index}){
+  const ref=useRef(null),reduced=useReducedMotion(),[canHover]=useState(()=>window.matchMedia('(hover:hover) and (pointer:fine)').matches);
+  const rotateX=useSpring(0,{stiffness:170,damping:20,mass:.6}),rotateY=useSpring(0,{stiffness:170,damping:20,mass:.6});
+  function move(e){
+    const el=ref.current;
+    if(!canHover||reduced||!el)return;
+    const box=el.getBoundingClientRect(),x=(e.clientX-box.left)/box.width,y=(e.clientY-box.top)/box.height;
+    rotateY.set((x-.5)*11);rotateX.set(-(y-.5)*9);
+    el.style.setProperty('--mx',`${(x*100).toFixed(1)}%`);
+    el.style.setProperty('--my',`${(y*100).toFixed(1)}%`);
+  }
+  function rest(){rotateX.set(0);rotateY.set(0);}
+  return <motion.a ref={ref} className="opp-card" data-type={call.type} href={call.url} target="_blank" rel="noreferrer noopener"
+    aria-label={`${call.title} on ${call.source}, opens in a new tab`}
+    style={{rotateX:reduced?0:rotateX,rotateY:reduced?0:rotateY,transformPerspective:1100}}
+    initial={reduced?false:{opacity:0,y:24}} animate={{opacity:1,y:0}}
+    transition={{duration:.55,delay:Math.min(index,9)*.045,ease:[.22,1,.36,1]}}
+    whileHover={canHover&&!reduced?{y:-7,transition:{type:'spring',stiffness:300,damping:24}}:undefined}
+    onPointerMove={move} onPointerLeave={rest}>
+    <div className="opp-art"><img src={`/art/opportunities/${coverPhotos[call.instrument]||'stage'}.jpg`} alt="" width="800" height="380"/></div>
+    <span className="opp-badge" title={call.source}><img src={platformIcons[call.source]} alt=""/></span>
+    <div className="opp-body"><h2>{call.title}</h2><p>{call.summary}</p></div>
+    <div className="opp-meta">
+      <span><MapPin size={13}/>{call.city}</span>
+      <span><Music2 size={13}/>{call.instrument}</span>
+      <span className="opp-age">{call.posted}</span>
+    </div>
+  </motion.a>;
+}
+
 export function Opportunities(){
   const [filter,setFilter]=useState('All');
   const shown=filter==='All'?opportunities:opportunities.filter(o=>o.type===filter);
   return <section className="work wrap opportunities-page">
     <header className="opp-head">
-      <div className="opp-heading"><small className="eyebrow">Open calls · India</small><h1>Opportunities<span>.</span></h1>
-        <p className="intro">Real calls from Indian music boards, hand-checked and linked to the original post.</p></div>
-      <div className="opp-status"><span className="dot" aria-hidden="true"/><div><small>Hand-checked</small><strong>{checkedAt}</strong></div><div><small>Live calls</small><strong>{opportunities.length}</strong></div></div>
+      <div className="opp-heading"><h1>Opportunities<span>.</span></h1>
+        <p className="intro">Find a band, join a session, or audition for a music video.</p></div>
     </header>
-    <div className="opp-toolbar"><div className="filters" aria-label="Filter opportunities">
-      {opportunityTypes.map(t=>{const count=t==='All'?opportunities.length:opportunities.filter(o=>o.type===t).length;return <button key={t} aria-pressed={filter===t} onClick={()=>setFilter(t)}>{t}<span>{count}</span></button>;})}
-    </div><p className="opp-count">{shown.length} {shown.length===1?'call':'calls'}{filter!=='All'&&` in ${filter.toLowerCase()}`}</p></div>
-    <div className="opp-grid">{shown.map(o=><article className="opp-card" key={o.id} data-type={o.type}>
-      <div className="opp-card-top"><span className="opp-type">{o.type}</span>{o.fresh&&<span className="opp-new">New</span>}</div>
-      <h2>{o.title}</h2><p>{o.summary}</p>
-      <dl className="opp-facts">
-        <div><dt><MapPin size={14}/>City</dt><dd>{o.city}</dd></div>
-        <div><dt><Music2 size={14}/>Instrument</dt><dd>{o.instrument}</dd></div>
-        <div><dt><Clock3 size={14}/>Posted</dt><dd>{o.posted}</dd></div>
-      </dl>
-      <a className="opp-source" href={o.url} target="_blank" rel="noreferrer noopener"><span><small>View on</small><strong>{o.source}</strong></span><ArrowUpRight size={18}/></a>
-    </article>)}</div>
+    <div className="opp-toolbar"><div className="filters" role="group" aria-label="Filter opportunities">
+      {opportunityTypes.map(t=><button key={t} aria-pressed={filter===t} onClick={()=>setFilter(t)}>{t}</button>)}
+    </div></div>
+    <div className="opp-grid">{shown.map((o,i)=><OpportunityCard key={o.id} call={o} index={i}/>)}</div>
     {!shown.length&&<p className="inset opp-empty">No calls in this lane right now. Try another filter.</p>}
     <section className="opp-sources" aria-labelledby="sources-title">
-      <div className="opp-section-head"><div><small className="eyebrow">Keep looking</small><h2 id="sources-title">Where to look<span>.</span></h2></div>
-        <p>Nine places worth checking between refreshes. Some need an account; a few ask for a fee.</p></div>
-      <div className="source-grid">{sources.map(s=><a className="source-card" key={s.name} href={s.url} target="_blank" rel="noreferrer noopener">
-        <div className="source-card-top"><strong>{s.name}</strong><ArrowUpRight size={16}/></div><small>{s.region}</small><p>{s.best}</p><span>{s.note}</span>
+      <div className="opp-section-head"><h2 id="sources-title">Where to look<span>.</span></h2></div>
+      <div className="source-grid">{sources.map(s=><a className="source-card source-logo" key={s.name} href={s.url} target="_blank" rel="noreferrer noopener" title={s.name} aria-label={`${s.name}, opens in a new tab`}>
+        <img src={platformIcons[s.name]} alt="" width="32" height="32"/>
       </a>)}</div>
     </section>
     <aside className="opp-post"><div><small className="eyebrow">For organisers</small><h2>Running a call?</h2>

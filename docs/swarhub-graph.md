@@ -1,6 +1,6 @@
 # SwarHub · project knowledge graph
 
-Start here for the active application. Follow the relevant edge to its source; the [previous generated graph](../graphify-out/GRAPH_REPORT.md) covers the older UI, tooling and supporting documents. The two graph views describe different revisions. Dependencies, recordings, the SQLite contents and generated bundles are not source nodes.
+Start here for the active application. Follow the relevant edge to its source. Dependencies, recordings, the SQLite contents and generated bundles are not source nodes.
 
 The [machine-readable source graph](swarhub-graph.json) indexes first-party modules, local imports and HTTP endpoints. `active-frontend` marks modules reachable from the live React entry. Regenerate after source topology changes with `node docs/build-source-graph.mjs`.
 
@@ -27,6 +27,7 @@ flowchart TD
   capture --> analysis["TakeAnalysis.jsx · measurements and best-part player"]
   dashboard --> analysis
   calls --> data["opportunities.js · hand-checked calls and nine sources"]
+  calls --> marks["public/art/platforms · nine local platform marks"]
   artist --> activity["Contributions.jsx · studio activity calendar"]
   capture --> sound
   dashboard --> sound
@@ -63,7 +64,7 @@ flowchart TD
 | How do I open the demo profile directly? | `studio/Studio.jsx` | `/preview/profile` explicitly reopens the tab’s preview artist session and redirects to `/profile`, including after a previous sign-out. An existing authenticated account keeps its own identity. |
 | Where does the Home excerpt come from? | `studio/ListeningDesk.jsx`, `studio/featured.js`, `public/audio/` | The cassette plays a bundled 46-second MP3 taken from the 0:17–1:03 section of the linked Avicii lyric video, so it does not depend on YouTube availability at runtime. `VITE_FEATURED_AUDIO_URL` can replace the file for a licensed deployment. The footer credit links to the source video. |
 | How do project details open? | `studio/Dashboard.jsx`, `studio/TakeAnalysis.jsx` | `/dashboard` lists repositories; `?project=<id>&take=<id>` opens the project and selected take. Adding a branch to a remote project creates a local working copy. |
-| Where do opportunities come from? | `studio/opportunities.js`, `studio/Portfolio.jsx` | The board is hand-curated from public Indian music platforms. Each card keeps SwarHub's own one-line summary and links to the original post; no listing text is copied and no application is transmitted. Re-check links and the `checkedAt` date before shipping. |
+| Where do opportunities come from? | `studio/opportunities.js`, `studio/Portfolio.jsx`, `public/art/platforms` | The board is hand-curated from public Indian music platforms. Each card keeps SwarHub's own one-line summary and links to the original post; no listing text is copied and no application is transmitted. Platform marks are stored locally so the page never hotlinks a remote favicon. Re-check links and the `checkedAt` date before shipping. |
 | Is a portfolio live? | `studio/Portfolio.jsx` | Portfolio selection is local. No artist is contacted and no application is transmitted. The profile deliberately does not list applications. |
 | What about the older architecture? | `graphify-out/graph.json`, `docs/architecture.md` | `src/App.jsx`, `src/components/`, `src/pages/` are the previous frontend, outside the active import tree. Backend recording/tagging routes are separate from the new local capture path. |
 

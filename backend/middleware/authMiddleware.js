@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'secret123';
+const JWT_SECRET = require('../jwtSecret');
 
 /**
  * Middleware to authenticate requests using JWT
