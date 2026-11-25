@@ -1,11 +1,10 @@
 import {useEffect,useState} from 'react';
 import {Link,useNavigate,useOutletContext} from 'react-router-dom';
-import {ArrowUpRight,BookOpen,Check,Coins,GitFork,Headphones,Link2,MapPin,NotebookPen,SlidersHorizontal,Users} from 'lucide-react';
-import {briefs} from './library';
+import {ArrowUpRight,BookOpen,Clock3,GitFork,Headphones,Link2,MapPin,Music2,NotebookPen,SlidersHorizontal,Users} from 'lucide-react';
 import {Topology} from './Dashboard';
 import {audioSource} from './playback';
 import Contributions from './Contributions';
-import Poster from './Poster';
+import {checkedAt,opportunities,opportunityTypes,sources} from './opportunities';
 
 function ListeningRoom({project}){
   const [id,setId]=useState(project.takes[0]?.id),[src,setSrc]=useState(''),[error,setError]=useState('');
@@ -19,24 +18,40 @@ function ListeningRoom({project}){
 }
 
 export function Opportunities(){
-  const {library,update}=useOutletContext(),projects=library.projects.filter(p=>p.takes.length);
-  const [opened,setOpened]=useState(''),[pid,setPid]=useState(projects[0].id),[tid,setTid]=useState('');
-  const project=projects.find(p=>p.id===pid)||projects[0],take=project.takes.find(t=>t.id===tid)||project.takes[0];
-  function apply(e,b){
-    e.preventDefault();update(l=>({...l,applications:[...l.applications.filter(a=>a.id!==b.id),{id:b.id,projectId:project.id,takeId:take.id,project:project.title,take:take.name,format:b.format,created:new Date().toISOString()}]}));setOpened('');
-  }
-  return <section className="work wrap"><h1>Opportunities<span>.</span></h1><p className="intro">Find a stage, a session, or a scene that needs your sound.</p>
-    <div className="briefs">{briefs.map(b=>{
-      const saved=library.applications.find(a=>a.id===b.id);
-      return <article className="panel brief" key={b.id}><Poster brief={b}/><div className="inset"><small className="eyebrow">{b.type}</small><p className="host-name">{b.host}</p><h2>{b.title}</h2><p>{b.detail}</p>
-        <div className="brief-meta"><span><MapPin size={15}/>{b.location}</span><span><Coins size={15}/>{b.terms}</span></div>
-        {saved&&<p className="notice"><Check size={15}/> Draft saved · {saved.project}</p>}
-        {opened===b.id?<form className="stack" onSubmit={e=>apply(e,b)}><label>Project<select value={project.id} onChange={e=>{setPid(e.target.value);setTid('');}}>{projects.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></label>
-          {b.format!=='Repository'&&<label>{b.format==='Hook'?'Hook from take':'Take'}<select value={take.id} onChange={e=>setTid(e.target.value)}>{project.takes.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label>}
-          <small>Preview listing. Save your application locally to review it on your profile.</small><div className="actions"><button className="btn primary">Save application</button><button type="button" className="plain" onClick={()=>setOpened('')}>Cancel</button></div></form>
-          :<button className="btn" onClick={()=>{setPid(saved?.projectId||projects[0].id);setTid(saved?.takeId||'');setOpened(b.id);}}>{saved?'Edit application':'Apply'} <ArrowUpRight size={15}/></button>}
-      </div></article>;
-    })}</div></section>;
+  const [filter,setFilter]=useState('All');
+  const shown=filter==='All'?opportunities:opportunities.filter(o=>o.type===filter);
+  return <section className="work wrap opportunities-page">
+    <header className="opp-head">
+      <div className="opp-heading"><small className="eyebrow">Open calls · India</small><h1>Opportunities<span>.</span></h1>
+        <p className="intro">Real calls from Indian music boards, hand-checked and linked to the original post.</p></div>
+      <div className="opp-status"><span className="dot" aria-hidden="true"/><div><small>Hand-checked</small><strong>{checkedAt}</strong></div><div><small>Live calls</small><strong>{opportunities.length}</strong></div></div>
+    </header>
+    <div className="opp-toolbar"><div className="filters" aria-label="Filter opportunities">
+      {opportunityTypes.map(t=>{const count=t==='All'?opportunities.length:opportunities.filter(o=>o.type===t).length;return <button key={t} aria-pressed={filter===t} onClick={()=>setFilter(t)}>{t}<span>{count}</span></button>;})}
+    </div><p className="opp-count">{shown.length} {shown.length===1?'call':'calls'}{filter!=='All'&&` in ${filter.toLowerCase()}`}</p></div>
+    <div className="opp-grid">{shown.map(o=><article className="opp-card" key={o.id} data-type={o.type}>
+      <div className="opp-card-top"><span className="opp-type">{o.type}</span>{o.fresh&&<span className="opp-new">New</span>}</div>
+      <h2>{o.title}</h2><p>{o.summary}</p>
+      <dl className="opp-facts">
+        <div><dt><MapPin size={14}/>City</dt><dd>{o.city}</dd></div>
+        <div><dt><Music2 size={14}/>Instrument</dt><dd>{o.instrument}</dd></div>
+        <div><dt><Clock3 size={14}/>Posted</dt><dd>{o.posted}</dd></div>
+      </dl>
+      <a className="opp-source" href={o.url} target="_blank" rel="noreferrer noopener"><span><small>View on</small><strong>{o.source}</strong></span><ArrowUpRight size={18}/></a>
+    </article>)}</div>
+    {!shown.length&&<p className="inset opp-empty">No calls in this lane right now. Try another filter.</p>}
+    <section className="opp-sources" aria-labelledby="sources-title">
+      <div className="opp-section-head"><div><small className="eyebrow">Keep looking</small><h2 id="sources-title">Where to look<span>.</span></h2></div>
+        <p>Nine places worth checking between refreshes. Some need an account; a few ask for a fee.</p></div>
+      <div className="source-grid">{sources.map(s=><a className="source-card" key={s.name} href={s.url} target="_blank" rel="noreferrer noopener">
+        <div className="source-card-top"><strong>{s.name}</strong><ArrowUpRight size={16}/></div><small>{s.region}</small><p>{s.best}</p><span>{s.note}</span>
+      </a>)}</div>
+    </section>
+    <aside className="opp-post"><div><small className="eyebrow">For organisers</small><h2>Running a call?</h2>
+      <p>Send the listing link and a one-line description. We will check it before it goes on the board.</p><small className="opp-post-note">Opens a draft in your mail app.</small></div>
+      <a className="btn primary" href="mailto:?subject=Opportunity%20for%20SwarHub&body=Title%3A%0ACity%3A%0AType%3A%0ADeadline%3A%0ALink%3A%0A">Suggest a listing <ArrowUpRight size={15}/></a></aside>
+    <p className="opp-disclaimer">Listings belong to the platforms that published them. SwarHub is independent and not affiliated with any source. Always check the original post for fees, dates and terms.</p>
+  </section>;
 }
 
 function external(value){

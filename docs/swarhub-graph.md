@@ -7,12 +7,12 @@ The [machine-readable source graph](swarhub-graph.json) indexes first-party modu
 ```mermaid
 flowchart TD
   entry["frontend/index.html → src/main.jsx"] --> shell["studio/Studio.jsx · router, session, workspace"]
-  entry --> css["studio/studio.css, workspace.css, community.css, home.css · layout, instrument surfaces, motion"]
+  entry --> css["studio/studio.css, workspace.css, community.css, home.css, opportunities.css · layout, instrument surfaces, motion"]
   shell --> home["/ and /home · Home.jsx · hero, idea and navigation guide"]
   shell --> feed["/feed · Feed.jsx · sample community repositories and local stars"]
   shell --> capture["/capture · Capture.jsx"]
   shell --> dashboard["/dashboard · Dashboard.jsx"]
-  shell --> briefs["/opportunities · Portfolio.jsx"]
+  shell --> calls["/opportunities · Portfolio.jsx · curated open calls and source directory"]
   shell --> artist["/profile · Portfolio.jsx"]
   shell --> auth["/login and /signup · Auth.jsx"]
   home --> desk["ListeningDesk.jsx · cassette transport and bundled excerpt"]
@@ -26,17 +26,17 @@ flowchart TD
   sound --> spectrum["spectrum.js · FFT energy band"]
   capture --> analysis["TakeAnalysis.jsx · measurements and best-part player"]
   dashboard --> analysis
-  briefs --> posters["Poster.jsx · six illustrated open calls"]
+  calls --> data["opportunities.js · hand-checked calls and nine sources"]
   artist --> activity["Contributions.jsx · studio activity calendar"]
   capture --> sound
   dashboard --> sound
-  capture --> library["library.js · sample repo, briefs, storage"]
+  capture --> library["library.js · sample repo and storage"]
   shell --> library
   library --> local["localStorage · per-workspace takes, master selections, drafts, artist"]
   library --> blobs["IndexedDB · original audio + exported hook, keyed by take ID"]
   capture -->|"new take with parent ID"| dashboard
   dashboard -->|"selected branch → new recording"| capture
-  briefs -->|"local application draft"| artist
+  calls -->|"external source link"| sources["BandMate, MyRangManch, StarClinch and six more"]
   artist -->|"open or fork repository"| dashboard
   auth --> api["src/lib/api.js · base URL, bearer session"]
   shell -->|"read account identity and projects"| api
@@ -63,7 +63,8 @@ flowchart TD
 | How do I open the demo profile directly? | `studio/Studio.jsx` | `/preview/profile` explicitly reopens the tab’s preview artist session and redirects to `/profile`, including after a previous sign-out. An existing authenticated account keeps its own identity. |
 | Where does the Home excerpt come from? | `studio/ListeningDesk.jsx`, `studio/featured.js`, `public/audio/` | The cassette plays a bundled 46-second MP3 taken from the 0:17–1:03 section of the linked Avicii lyric video, so it does not depend on YouTube availability at runtime. `VITE_FEATURED_AUDIO_URL` can replace the file for a licensed deployment. The footer credit links to the source video. |
 | How do project details open? | `studio/Dashboard.jsx`, `studio/TakeAnalysis.jsx` | `/dashboard` lists repositories; `?project=<id>&take=<id>` opens the project and selected take. Adding a branch to a remote project creates a local working copy. |
-| Is a portfolio or brief live? | `studio/Portfolio.jsx` | Portfolio selection and example brief drafts are local. No artist is contacted and no application is transmitted. Opportunities can save a local draft, but the profile deliberately does not list applications. |
+| Where do opportunities come from? | `studio/opportunities.js`, `studio/Portfolio.jsx` | The board is hand-curated from public Indian music platforms. Each card keeps SwarHub's own one-line summary and links to the original post; no listing text is copied and no application is transmitted. Re-check links and the `checkedAt` date before shipping. |
+| Is a portfolio live? | `studio/Portfolio.jsx` | Portfolio selection is local. No artist is contacted and no application is transmitted. The profile deliberately does not list applications. |
 | What about the older architecture? | `graphify-out/graph.json`, `docs/architecture.md` | `src/App.jsx`, `src/components/`, `src/pages/` are the previous frontend, outside the active import tree. Backend recording/tagging routes are separate from the new local capture path. |
 
 Keep this map in sync when an entry point, route, storage owner or API contract changes. For implementation details, inspect the named source rather than rescanning the repository.

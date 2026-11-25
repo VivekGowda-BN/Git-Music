@@ -17,7 +17,7 @@ const rooms=[
   {to:'/feed',label:'Feed',icon:Radio,note:'See what other artists are recording, branching and publishing.'},
   {to:'/dashboard',label:'Dashboard',icon:LayoutGrid,note:'Open every project, take and mix you have saved, filed by song.'},
   {to:'/capture',label:'Capture',icon:Mic,note:'Record a new idea and let SwarHub find the strongest passage.'},
-  {to:'/opportunities',label:'Opportunities',icon:Tickets,note:'Find sync briefs, sessions and stages that need your sound.'},
+  {to:'/opportunities',label:'Opportunities',icon:Tickets,note:'Real gigs, band openings, jams and castings from Indian music boards.'},
 ];
 function AboutSwarHub(){
   return <section className="about-swarhub" aria-labelledby="about-title"><div className="wrap">

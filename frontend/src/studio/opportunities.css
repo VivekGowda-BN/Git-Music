@@ -1,0 +1,105 @@
+/* Opportunities: a hand-checked board of calls from Indian music platforms. */
+.opportunities-page {padding-bottom:88px}
+
+.opp-head {display:flex;align-items:flex-end;justify-content:space-between;gap:28px;padding-bottom:26px;border-bottom:1px solid var(--line)}
+.opp-heading .eyebrow {display:block;margin-bottom:12px}
+.opp-heading .intro {max-width:620px;margin:12px 0 0}
+.opp-status {display:flex;align-items:center;gap:16px;flex:none;padding:12px 16px;border:1px solid var(--line);border-radius:8px;background:#f1efe6}
+.opp-status .dot {flex:none}
+.opp-status div {display:grid;gap:2px;padding-left:16px;border-left:1px solid #d4d0c3}
+.opp-status div:first-of-type {padding-left:0;border-left:0}
+.opp-status small {font:9px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:#7b7c6f}
+.opp-status strong {font:14px var(--mono);color:#354839}
+
+.opp-toolbar {display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:22px 0 18px}
+.opp-toolbar .filters {margin:0}
+.opp-toolbar .filters button {display:inline-flex;align-items:center;gap:7px}
+.opp-toolbar .filters button:not([aria-pressed=true]) {background:#fbfaf5}
+.opp-toolbar .filters button[aria-pressed=true] {color:#fff;background:var(--green)}
+.opp-toolbar .filters button span {font:10px var(--mono);color:#8a887c}
+.opp-toolbar .filters button[aria-pressed=true] span {color:#e9e4d4}
+.opp-count {margin:0;font:11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:#7b7c6f}
+
+.opp-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
+.opp-card {position:relative;display:flex;flex-direction:column;min-width:0;padding:22px;overflow:hidden;border:1px solid var(--line);border-radius:9px;background:#fcfbf6;transition:transform .18s,box-shadow .18s,border-color .18s}
+.opp-card:before {content:"";position:absolute;inset:0 0 auto;height:3px;background:#8b5a43}
+.opp-card[data-type="Gigs"]:before {background:#a64027}
+.opp-card[data-type="Band openings"]:before {background:#3f6249}
+.opp-card[data-type="Jams"]:before {background:#6f8060}
+.opp-card[data-type="Collabs"]:before {background:#b07a45}
+.opp-card[data-type="Castings"]:before {background:#7b5a72}
+.opp-card:hover {transform:translateY(-3px);border-color:#b9b5a8;box-shadow:0 14px 28px -24px #26352b80}
+.opp-card-top {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+.opp-type {font:9.5px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:#6e705f}
+.opp-type:before {content:"";display:inline-block;width:6px;height:6px;margin-right:7px;border-radius:50%;background:currentColor}
+.opp-card[data-type="Gigs"] .opp-type {color:#a64027}
+.opp-card[data-type="Band openings"] .opp-type {color:#3f6249}
+.opp-card[data-type="Jams"] .opp-type {color:#607552}
+.opp-card[data-type="Collabs"] .opp-type {color:#9a6838}
+.opp-card[data-type="Castings"] .opp-type {color:#7b5a72}
+.opp-new {padding:4px 7px;border-radius:3px;color:#fbf6e9;background:#3f6249;font:9px var(--mono);text-transform:uppercase;letter-spacing:.1em}
+.opp-card h2 {margin:0 0 9px;color:#2b3028;font:400 clamp(22px,2vw,27px)/1.16 Georgia,serif;letter-spacing:-.035em}
+.opp-card>p {margin:0 0 20px;font-size:14px;line-height:1.6;color:#5f6358}
+.opp-facts {display:grid;gap:9px;margin:auto 0 18px;padding:14px 0 0;border-top:1px solid #dedbd0}
+.opp-facts div {display:grid;grid-template-columns:94px minmax(0,1fr);gap:8px;align-items:baseline}
+.opp-facts dt {display:flex;align-items:center;gap:6px;font:9.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:#8a887c}
+.opp-facts dd {margin:0;font-size:13px;color:#41483d}
+.opp-source {display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 -22px -22px;padding:14px 22px;border-top:1px solid #dedbd0;background:#f5f3ea;transition:background .18s}
+.opp-source small {display:block;font:9px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:#8a887c}
+.opp-source strong {display:block;margin-top:2px;font-size:13px;color:#354839}
+.opp-source svg {color:#a64027;transition:transform .18s}
+.opp-source:hover {background:#ebe8dc}
+.opp-source:hover svg {transform:translate(2px,-2px)}
+.opp-empty {margin-top:18px}
+
+.opp-sources {margin-top:64px;padding-top:34px;border-top:1px solid var(--line)}
+.opp-section-head {display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:24px}
+.opp-section-head .eyebrow {display:block;margin-bottom:10px}
+.opp-section-head h2 {margin:0;font:400 clamp(34px,4vw,54px)/1.03 Georgia,serif;letter-spacing:-.055em}
+.opp-section-head h2 span {color:var(--rust)}
+.opp-section-head p {max-width:380px;margin:0 0 5px;font-size:14px}
+.source-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.source-card {display:flex;flex-direction:column;gap:6px;padding:19px 20px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:#fcfbf6;transition:background .18s}
+.source-card:hover {background:#f1eee3}
+.source-card-top {display:flex;align-items:center;justify-content:space-between;gap:10px}
+.source-card-top strong {font:600 15px "Segoe UI",sans-serif;color:#2f3d33}
+.source-card-top svg {color:#a64027;transition:transform .18s}
+.source-card:hover .source-card-top svg {transform:translate(2px,-2px)}
+.source-card small {font:9px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:#8a887c}
+.source-card p {margin:6px 0 4px;font-size:13.5px;line-height:1.55;color:#4f564a}
+.source-card>span {margin-top:auto;font-size:12px;line-height:1.5;color:#7a7c70}
+
+.opp-post {position:relative;display:flex;align-items:center;justify-content:space-between;gap:30px;margin-top:46px;padding:clamp(24px,3vw,36px);overflow:hidden;border-radius:10px;color:#f7f1e4;background:linear-gradient(145deg,#2f4336,#22352a)}
+.opp-post:before {content:"";position:absolute;right:-40px;top:-70px;width:220px;height:220px;border-radius:50%;border:1px solid #ffffff1f;box-shadow:0 0 0 26px #ffffff08,0 0 0 54px #ffffff05}
+.opp-post>div,.opp-post>a {position:relative;z-index:1}
+.opp-post .eyebrow {display:block;margin-bottom:9px;color:#e0a987}
+.opp-post h2 {margin:0 0 9px;color:#fbf6e9;font:400 clamp(28px,3vw,40px)/1.05 Georgia,serif;letter-spacing:-.045em}
+.opp-post p {max-width:520px;margin:0;font-size:14px;color:#c9d2c3}
+.opp-post-note {display:block;margin-top:7px;color:#9fb09a;font:9px var(--mono);text-transform:uppercase;letter-spacing:.1em}
+.opp-post .btn.primary {flex:none;color:#2b3a30;background:#f4efe2;border-color:#f4efe2}
+.opp-post .btn.primary:hover {background:#fffaf0}
+.opp-disclaimer {max-width:820px;margin:22px 0 0;font-size:11.5px;line-height:1.6;color:#85867a}
+
+.feed-updates .rail-heading .rail-all {width:auto;height:auto;padding:0;border:0;font-size:11px;color:#6f7568}
+.feed-updates .rail-heading .rail-all:hover {color:var(--rust);text-decoration:underline;text-underline-offset:3px}
+.feed-updates .rail-more {margin-top:14px}
+
+@media(max-width:1050px){
+  .opp-grid,.source-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:800px){
+  .opp-head {flex-direction:column;align-items:flex-start}
+  .opp-status {width:100%;justify-content:flex-start}
+  .opp-section-head {flex-direction:column;align-items:flex-start;gap:14px}
+  .opp-post {flex-direction:column;align-items:flex-start}
+}
+@media(max-width:600px){
+  .opp-grid,.source-grid {grid-template-columns:1fr}
+  .opp-toolbar .filters button {padding:7px 11px;font-size:12px}
+  .opp-facts div {grid-template-columns:88px minmax(0,1fr)}
+  .opp-status {gap:12px;padding:11px 13px}
+  .opp-status div {padding-left:12px}
+  .opp-status strong {font-size:12px}
+  .opp-post {gap:20px}
+  .opp-post .btn.primary {width:100%}
+}

@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {Link,useOutletContext} from 'react-router-dom';
 import {ArrowRight,ArrowUpRight,BookOpen,GitBranch,Plus,Search,Star} from 'lucide-react';
 import Avatar from './Avatar';
+import {opportunities} from './opportunities';
 
 const releases=[
   {id:'monsoon',artist:'Isha Rao',project:'Monsoon Letters',circle:true,lane:'Indie folk',time:'35 min ago',stars:42,action:'added a guitar branch',note:'Kept the rain from the room mic. The second guitar now answers the vocal instead of doubling it.',tracks:['Room vocal','Rain guitar','Second verse']},
@@ -31,7 +32,9 @@ export default function Feed(){
           <button aria-pressed={starred.includes(p.id)} aria-label={`${starred.includes(p.id)?'Unstar':'Star'} ${p.project}`} onClick={()=>star(p.id)}><Star size={15} fill={starred.includes(p.id)?'currentColor':'none'}/> {p.stars+Number(starred.includes(p.id))}</button></div></div></article>)}</div>
     <aside className="feed-updates"><div className="rail-heading"><h2>Updates</h2></div>
       <ol className="updates-list">{[releases[0],releases[1],releases[3]].map(p=><li key={p.id}><a className="update-link" href={`#feed-${p.id}`} onClick={e=>openUpdate(e,p.id)}><Avatar index={releases.indexOf(p)} size={22} label={`${p.artist} profile`}/><span><small>{p.time}</small>{p.artist} {p.action} in <strong>{p.project}</strong>.</span></a></li>)}</ol>
-      <div className="rail-heading"><h2>Open calls</h2></div><Link className="call-link" to="/opportunities"><strong>Amber Frame Films</strong><span>Short film score · Mumbai</span><ArrowUpRight size={15}/></Link>
+      <div className="rail-heading"><h2>Open calls</h2><Link className="rail-all" to="/opportunities">All</Link></div>
+      {opportunities.slice(0,3).map(o=><a className="call-link" key={o.id} href={o.url} target="_blank" rel="noreferrer noopener"><strong>{o.title}</strong><span>{o.city} · {o.source}</span><ArrowUpRight size={15}/></a>)}
+      <Link className="rail-more" to="/opportunities">See all {opportunities.length} calls <ArrowRight size={13}/></Link>
     </aside></div>
   </section>;
 }

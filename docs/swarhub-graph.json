@@ -150,7 +150,7 @@
     },
     {
       "id": "frontend/src/studio/Poster.jsx",
-      "group": "active-frontend"
+      "group": "previous-frontend"
     },
     {
       "id": "frontend/src/studio/Studio.jsx",
@@ -178,6 +178,14 @@
     },
     {
       "id": "frontend/src/studio/library.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/opportunities.css",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/opportunities.js",
       "group": "active-frontend"
     },
     {
@@ -413,6 +421,11 @@
     },
     {
       "from": "frontend/src/main.jsx",
+      "to": "frontend/src/studio/opportunities.css",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/main.jsx",
       "to": "frontend/src/studio/Studio.jsx",
       "relation": "imports"
     },
@@ -502,6 +515,11 @@
       "relation": "imports"
     },
     {
+      "from": "frontend/src/studio/Feed.jsx",
+      "to": "frontend/src/studio/opportunities.js",
+      "relation": "imports"
+    },
+    {
       "from": "frontend/src/studio/Home.jsx",
       "to": "frontend/src/studio/ListeningDesk.jsx",
       "relation": "imports"
@@ -538,11 +556,6 @@
     },
     {
       "from": "frontend/src/studio/Portfolio.jsx",
-      "to": "frontend/src/studio/library.js",
-      "relation": "imports"
-    },
-    {
-      "from": "frontend/src/studio/Portfolio.jsx",
       "to": "frontend/src/studio/Dashboard.jsx",
       "relation": "imports"
     },
@@ -558,7 +571,7 @@
     },
     {
       "from": "frontend/src/studio/Portfolio.jsx",
-      "to": "frontend/src/studio/Poster.jsx",
+      "to": "frontend/src/studio/opportunities.js",
       "relation": "imports"
     },
     {

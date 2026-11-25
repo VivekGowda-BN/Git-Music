@@ -4,6 +4,7 @@ import './studio/studio.css'
 import './studio/workspace.css'
 import './studio/community.css'
 import './studio/home.css'
+import './studio/opportunities.css'
 import App from './studio/Studio.jsx'
 
 createRoot(document.getElementById('root')).render(
