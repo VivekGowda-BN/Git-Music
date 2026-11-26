@@ -51,16 +51,17 @@ function Shell({scope}){
       try{
         const [who,{data:projects}]=await Promise.all([fetchCurrentUser(),axios.get(`${API_URL}/my-projects`,options)]);
         const repos=await Promise.all(projects.map(async p=>{const {data}=await axios.get(`${API_URL}/projects/${p.id}/versions`,options);
-          return {...p,id:`account-${p.id}`,remote:true,takes:data.reverse().map(v=>({...v,id:`version-${v.id}`,name:v.instruments||`Take ${v.id}`,created:v.created_at,parent:null}))};}));
+          return {...p,serverId:p.id,id:`account-${p.id}`,remote:true,takes:data.reverse().map(v=>({...v,id:`version-${v.id}`,name:v.instruments||`Take ${v.id}`,created:v.created_at,parent:null}))};}));
         if(active){setUser(who);setRemote(repos);}
       }catch{if(active)setAccountError('Account repositories could not be loaded. Your local workspace is available.');}
     })();return()=>{active=false;};
   },[scope]);
   function update(fn){const next=fn(library);try{localStorage.setItem(`swarhub:${scope}`,JSON.stringify(next));setLibrary(next);setStorageError('');}catch{setStorageError('Browser storage is full or unavailable. Your changes could not be saved.');throw Error('Storage unavailable');}}
+  function removeRemote(id){setRemote(list=>list.filter(p=>p.id!==id));}
   return <><a className="skip" href="#main">Skip to content</a><header className="top glass-nav" onKeyDown={e=>{if(e.key==='Escape')setMenu(false);}}><div className="nav-wrap wrap" onClick={e=>{if(e.target.closest('a'))setMenu(false);}}><Brand/><nav id="main-navigation" aria-label="Main navigation" className={menu?'open':''}>{links.map(([name,path])=><NavLink className={({isActive})=>isActive?'active':''} key={path} to={path}>{({isActive})=><>{isActive&&<motion.i aria-hidden="true" className="nav-highlight" layoutId="nav-active" transition={{duration:reduced?0:.22}}/>}<span>{name}</span></>}</NavLink>)}</nav>
     <div className="account-nav">{artistView?<><Link to="/profile" className="avatar-link" aria-label={`Open ${library.artist.name||user?.username||'artist'} profile`} title="Artist profile" aria-current={pathname==='/profile'?'page':undefined}><img src="/art/artist.svg" alt=""/></Link><button className="login-link" onClick={signOut} aria-label="Sign out"><LogOut size={14}/><span>Sign out</span></button></>:<><Link className="text-login" to="/login">Log in</Link><Link className="login-link" to="/signup">Sign up <ArrowUpRight size={14}/></Link></>}</div>
     <button className="menu-toggle" aria-controls="main-navigation" aria-expanded={menu} aria-label={menu?'Close navigation':'Open navigation'} onClick={()=>setMenu(v=>!v)}>{menu?<X/>:<Menu/>}</button></div></header>
-    <main id="main" tabIndex="-1">{storageError&&<p className="wrap error" role="alert">{storageError}</p>}<Outlet context={{library,update,remote,user,accountError,previewArtist:!signedIn&&preview,openPreview}}/></main><Footer/></>;
+    <main id="main" tabIndex="-1">{storageError&&<p className="wrap error" role="alert">{storageError}</p>}<Outlet context={{library,update,remote,removeRemote,user,accountError,previewArtist:!signedIn&&preview,openPreview}}/></main><Footer/></>;
 }
 export default function Studio(){
   const session=()=>getAuthToken()?`artist-${getAuthUserId()||'local'}`:'guest';

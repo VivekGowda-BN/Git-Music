@@ -1,9 +1,12 @@
 import {useEffect,useRef,useState} from 'react';
 import {Link,useNavigate,useOutletContext,useSearchParams} from 'react-router-dom';
-import { ArrowLeft,ArrowUpRight,Check,Compass,Disc3,GitBranch,GitMerge,Headphones,History,Mic,Play,Search,Square } from 'lucide-react';
+import { ArrowLeft,ArrowUpRight,Check,Compass,Disc3,GitBranch,GitMerge,Headphones,History,Mic,Play,Search,Square,Trash2 } from 'lucide-react';
+import axios from 'axios';
 import {clock} from './audio';
 import {audioSource} from './playback';
 import {SavedAnalysis} from './TakeAnalysis';
+import {removeMedia} from './library';
+import {API_URL,getAuthHeaders} from '../lib/api';
 
 export function Topology({takes,selected,select}){
   const [offsets,setOffsets]=useState({}),drag=useRef(null);
@@ -62,11 +65,33 @@ function Repository({project,initial,library,update}){
   </article>{current&&<SavedAnalysis key={current.id} take={current} onPreview={stop}/>}</div>;
 }
 export default function Dashboard(){
-  const {library,update,remote,accountError}=useOutletContext(),[query]=useSearchParams(),projects=[...library.projects,...remote],project=projects.find(p=>p.id===query.get('project'));
+  const {library,update,remote,removeRemote,accountError}=useOutletContext(),[query]=useSearchParams(),navigate=useNavigate(),projects=[...library.projects,...remote],project=projects.find(p=>p.id===query.get('project'));
   const [search,setSearch]=useState('');
+  const [confirmDelete,setConfirmDelete]=useState(false),[deleting,setDeleting]=useState(false),[deleteError,setDeleteError]=useState('');
   const visible=projects.filter(p=>p.title.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())).sort((a,b)=>Number(!!a.demo)-Number(!!b.demo));
+  async function deleteProject(){
+    setDeleting(true);setDeleteError('');
+    try{
+      if(project.remote){
+        await axios.delete(`${API_URL}/projects/${project.serverId??project.id.replace(/^account-/,'')}`,{headers:getAuthHeaders()});
+        removeRemote?.(project.id);
+      }else{
+        await Promise.all(project.takes.map(t=>removeMedia(t.id).catch(()=>{})));
+        update(l=>({...l,projects:l.projects.filter(p=>p.id!==project.id),mixes:Object.fromEntries(Object.entries(l.mixes||{}).filter(([key])=>key!==project.id))}));
+      }
+      navigate('/dashboard');
+    }catch(e){
+      setDeleteError(e.response?.data?.error||e.message||'Could not delete this project.');
+      setDeleting(false);
+    }
+  }
   if(project)return <section className="work wrap"><Link className="plain back-link" to="/dashboard"><ArrowLeft size={16}/> All projects</Link><h1>{project.title}<span>.</span></h1><p className="intro">{project.remote?'Account repository':project.demo?'Studio arrangement':'Audio repository'} · {project.takes.length} takes</p>
-    <Repository key={`${project.id}-${project.takes.length}`} project={project} initial={query.get('take')} library={library} update={update}/></section>;
+    <Repository key={`${project.id}-${project.takes.length}`} project={project} initial={query.get('take')} library={library} update={update}/>
+    <details className="danger-zone"><summary><Trash2 size={16}/> Project settings</summary><div>
+      <p>Deleting <strong>{project.title}</strong> removes its takes {project.remote?'from your account':'from this browser'}. This cannot be undone.</p>
+      {deleteError&&<p role="alert" className="error">{deleteError}</p>}
+      {confirmDelete?<div className="actions"><button className="btn danger" disabled={deleting} onClick={deleteProject}>{deleting?'Deleting…':'Delete permanently'}</button><button className="btn" disabled={deleting} onClick={()=>setConfirmDelete(false)}>Cancel</button></div>:<button className="btn danger" onClick={()=>setConfirmDelete(true)}><Trash2 size={15}/> Delete project</button>}
+    </div></details></section>;
   function card(p){const num=projects.indexOf(p);return <Link className="project-card sleeve-card" key={p.id} to={`/dashboard?project=${p.id}`}>
     <div className={`sleeve-art ink-${num%3}`} aria-hidden="true"><i/><b/><Disc3/></div>
     <div className="sleeve-body"><small className="micro">{p.demo?'Studio arrangement':p.remote?'Account project':'Local recording'}</small><h3>{p.title}</h3><div className="between"><span><GitBranch size={14}/> {p.takes.length} {p.takes.length===1?'take':'takes'} · {p.is_public?'Public':'Private'}</span><ArrowUpRight size={18}/></div></div></Link>;}

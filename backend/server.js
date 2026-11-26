@@ -211,6 +211,39 @@ app.get('/my-projects', authenticateUser, (req, res) => {
   }
 });
 
+// Delete a project and its version rows. Ownership is checked before either
+// delete so one account cannot remove another account's work.
+app.delete('/projects/:id', authenticateUser, (req, res) => {
+  const project_id = req.params.id;
+  const user_id = req.user_id;
+
+  db.get('SELECT id FROM projects WHERE id = ? AND user_id = ?', [project_id, user_id], (err, project) => {
+    if (err) {
+      console.error('[Projects] Delete lookup error:', err.message);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (!project) {
+      return res.status(403).json({ error: 'Forbidden: You do not own this project' });
+    }
+    db.run('DELETE FROM audio_versions WHERE project_id = ?', [project_id], (err) => {
+      if (err) {
+        console.error('[Projects] Version delete error:', err.message);
+        return res.status(500).json({ error: 'Failed to delete project versions' });
+      }
+      db.run('DELETE FROM projects WHERE id = ? AND user_id = ?', [project_id, user_id], function (err) {
+        if (err) {
+          console.error('[Projects] Delete error:', err.message);
+          return res.status(500).json({ error: 'Failed to delete project' });
+        }
+        if (!this.changes) {
+          return res.status(404).json({ error: 'Project not found' });
+        }
+        res.json({ success: true });
+      });
+    });
+  });
+});
+
 // Version Routes
 app.post('/versions', authenticateUser, (req, res) => {
   const {

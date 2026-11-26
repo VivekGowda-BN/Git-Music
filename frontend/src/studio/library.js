@@ -23,13 +23,18 @@ export async function media(key,value) {
   return new Promise((resolve,reject)=>{const tx=db.transaction('takes',value?'readwrite':'readonly'),s=tx.objectStore('takes'),r=value?s.put(value,key):s.get(key);
     tx.oncomplete=()=>{db.close();resolve(r.result);};tx.onabort=()=>{db.close();reject(tx.error);};});
 }
+export async function removeMedia(key) {
+  const db=await database();
+  return new Promise((resolve,reject)=>{const tx=db.transaction('takes','readwrite');tx.objectStore('takes').delete(key);
+    tx.oncomplete=()=>{db.close();resolve();};tx.onabort=()=>{db.close();reject(tx.error);};});
+}
 export function loadLibrary(scope) {
   try {
     const saved=JSON.parse(localStorage.getItem(`swarhub:${scope}`));
-    if(saved?.projects?.length){
+    if(saved&&Array.isArray(saved.projects)){
       saved.projects=saved.projects.map(p=>p.demo&&p.title==='Janam'?{...p,title:song.title,takes:p.takes.map(t=>demoProject.takes.find(v=>v.id===t.id&&v.part===t.part)||t)}:p);
-      if(scope==='guest')saved.projects.push(...previewSessions.filter(p=>!saved.projects.some(v=>v.id===p.id)));
-      return saved;
+      if(scope==='guest'&&saved.projects.length)saved.projects.push(...previewSessions.filter(p=>!saved.projects.some(v=>v.id===p.id)));
+      return {projects:[],applications:[],artist:{name:'',bio:'',gear:''},mixes:{},...saved};
     }
   } catch { /* New workspace */ }
   return {projects:scope==='guest'?[demoProject,...previewSessions]:[demoProject],applications:[],artist:{name:'',bio:'',gear:''},mixes:{}};

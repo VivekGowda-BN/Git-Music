@@ -31,21 +31,25 @@ frontend/
     ├── main.jsx            Active React entry point
     ├── lib/api.js          API client and account session helpers
     └── studio/
-        ├── Studio.jsx      Routes, navigation, and shared workspace
-        ├── Home.jsx        Home hero and listening desk
-        ├── Capture.jsx     Microphone recording and file import
-        ├── Dashboard.jsx   Project history, branches, and master mixes
-        ├── Feed.jsx        Demo community feed
-        ├── Portfolio.jsx   Artist profile and Opportunities page
+        ├── Studio.jsx        Routes, navigation, and shared workspace
+        ├── Home.jsx          Home hero and listening desk
+        ├── Capture.jsx       Microphone recording and file import
+        ├── Dashboard.jsx     Project history, branches, and master mixes
+        ├── Feed.jsx          Demo community feed
+        ├── Portfolio.jsx     Artist profile and Opportunities page
         ├── opportunities.js  Curated listings and source links
-        ├── audio.js        Audio analysis and WAV encoding
-        └── library.js      Local project and recording storage
+        ├── audio.js          Decoding, analysis worker and WAV encoding
+        ├── musicFeatures.js  Tempo and key estimators
+        ├── signalProfile.js  Mix profile and highlight selection
+        └── library.js        Local project and recording storage
 backend/
 ├── server.js               Express endpoints
 ├── db.js                   SQLite initialization and schema
 └── middleware/             JWT authentication
 docs/
 ├── images/                 README screenshot
+├── capture-analysis.md     Tempo, key, mix readings and benchmarks
+├── capture-highlights.md   How the suggested excerpt is chosen
 └── swarhub-graph.md        Routes, storage, and data flows
 ```
 
@@ -74,8 +78,9 @@ The API defaults to `http://localhost:3000` and initializes its SQLite database 
 ## Development
 
 - Run `npm run lint` and `npm run build` in `frontend/`.
+- Run the analysis tests with `node --test src/__tests__/musicFeatures.test.js src/__tests__/signalProfile.test.js` in `frontend/`.
 - Edit [`frontend/src/studio/opportunities.js`](frontend/src/studio/opportunities.js) to curate the board.
-- See the [project map](docs/swarhub-graph.md) for routes, data flows, and storage.
+- See the [project map](docs/swarhub-graph.md) for routes, data flows, and storage, and [Capture analysis](docs/capture-analysis.md) for the measured accuracy and benchmark method.
 
 ## Project status
 
