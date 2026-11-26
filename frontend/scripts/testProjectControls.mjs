@@ -73,7 +73,7 @@ try {
     await openCapture();
     await upload();
     const dialog = await openSaveDialog(discardName);
-    await dialog.getByRole('button', {name: 'Discard this recording'}).click();
+    await dialog.getByRole('button', {name: 'Cancel and delete this recording'}).click();
     await page.getByRole('dialog').waitFor({state: 'detached'});
     assert.equal(await page.getByRole('button', {name: 'Save this take'}).count(), 0,
       'Discarding must clear the analysed take');
@@ -93,12 +93,23 @@ try {
     await upload();
     await page.getByRole('button', {name: 'Save this take'}).click();
     await page.getByRole('dialog').waitFor();
-    await page.getByRole('button', {name: 'Discard take'}).click();
+    await page.getByRole('button', {name: 'Cancel & delete take'}).click();
     await page.getByRole('dialog').waitFor({state: 'detached'});
     assert.equal(await page.getByRole('button', {name: 'Save this take'}).count(), 0);
     console.log('PASS discard from the dialog action');
 
-    // 3. Delete is only offered on the project detail page, never on a card.
+    // 3. Closing the dialog with Escape also deletes the unsaved take.
+    await openCapture();
+    await upload();
+    await page.getByRole('button', {name: 'Save this take'}).click();
+    await page.getByRole('dialog').waitFor();
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog').waitFor({state: 'detached'});
+    assert.equal(await page.getByRole('button', {name: 'Save this take'}).count(), 0,
+      'Closing the dialog must delete the unsaved take');
+    console.log('PASS discard by closing the dialog');
+
+    // 4. Delete is only offered on the project detail page, never on a card.
     await openCapture();
     await upload();
     await openSaveDialog(deleteName);

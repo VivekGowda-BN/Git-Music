@@ -127,6 +127,13 @@ async function ready(page) {
   await save.or(alert).first().waitFor({timeout:120000});
   if (await alert.count()) assert.fail(`Capture: ${await alert.first().innerText()}`);
 }
+async function readyRecording(page) {
+  const dialog = page.getByRole('dialog');
+  const alert = page.getByRole('alert');
+  await dialog.or(alert).first().waitFor({timeout:120000});
+  if (await alert.count()) assert.fail(`Capture: ${await alert.first().innerText()}`);
+  return dialog;
+}
 async function saveAndReopen(page, original, duration, title) {
   await page.getByRole('button',{name:'Save this take'}).click();
   const dialog = page.getByRole('dialog');
@@ -232,7 +239,11 @@ try {
     const stop = page.getByRole('button',{name:'Stop recording'});
     await stop.waitFor();
     await page.waitForFunction(() => Number(document.querySelector('.rec-dial.live strong')?.textContent.split(':')[1]) >= 5);
-    await stop.click(); await ready(page);
+    await stop.click();
+    // A finished recording opens the naming dialog; review it without saving.
+    const dialog = await readyRecording(page);
+    await dialog.getByRole('button',{name:'Review audio'}).click();
+    await dialog.waitFor({state:'detached'});
     // MediaRecorder WebM can omit a duration in its container; the app displays the decoded duration.
     const status = await page.locator('.analysis [role=status]').innerText();
     const match = /(\d+:\d\d)/.exec(status);

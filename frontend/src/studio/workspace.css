@@ -54,6 +54,7 @@
 .dialog-close {flex:none;display:grid;place-items:center;width:38px;height:38px;margin-top:-4px;border:1px solid #c9c8ba;border-radius:50%;background:#f6f4ea;color:#5d6657}
 .dialog-close:hover {background:#ece9dc;color:#7f3524;border-color:#bd9b8f;transform:rotate(4deg)}
 .dialog-close:disabled {cursor:wait;opacity:.5;transform:none}
+.dialog-note {color:#5c6556;font-size:12px;line-height:1.45}
 .btn.danger {border-color:#c09a8c;background:#fbf2ed;color:#8a3523}
 .btn.danger:hover {background:#f4e1d8;border-color:#a97563;color:#772b1b}
 .danger-zone {margin-top:26px;border-top:1px solid var(--line);padding-top:16px;max-width:620px}

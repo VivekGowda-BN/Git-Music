@@ -29,6 +29,8 @@ export default function Capture(){
     try{
       const {meta,hook}=await analyse(blob,{signal:controller.signal});if(controller.signal.aborted)return;
       setTake({blob,meta,url:URL.createObjectURL(blob),clip:hook?URL.createObjectURL(hook):null,hook});
+      // A fresh recording goes straight to naming; cancelling the dialog deletes it.
+      if(recorded)setFiling(true);
     }catch(e){if(alive.current&&!controller.signal.aborted)setError(e.name==='EncodingError'?'This audio could not be decoded. Try a WAV or MP3 file.':e.message);}
     finally{if(alive.current&&job.current===controller){setPhase('idle');job.current=null;}}
   }
@@ -74,13 +76,13 @@ export default function Capture(){
      </article><AnalysisPanel meta={take?.meta} clip={take?.clip} name={name} status={phase==='analysing'?'Listening for pulse, tonal centre, and a highlight…':''}/></div>
      {phase==='analysing'&&<button className="btn resume-file" onClick={()=>{job.current?.abort();job.current=null;setPhase('idle');}}>Cancel analysis</button>}
     {take&&!filing&&<button className="btn primary resume-file" onClick={()=>setFiling(true)}><GitBranch size={16}/> Save this take</button>}
-    {filing&&<FileDialog close={()=>{if(phase!=='saving')setFiling(false);}}><form className="stack" onSubmit={save}><div className="dialog-head"><div><small className="eyebrow">Capture complete</small><h2 id="file-title">Save your take.</h2></div><button type="button" className="dialog-close" aria-label="Discard this recording" title="Discard this recording" disabled={phase==='saving'} onClick={discard}><X size={19}/></button></div>
+    {filing&&<FileDialog close={discard}><form className="stack" onSubmit={save}><div className="dialog-head"><div><small className="eyebrow">Capture complete</small><h2 id="file-title">Save your take.</h2></div><button type="button" className="dialog-close" aria-label="Cancel and delete this recording" title="Cancel and delete this recording" disabled={phase==='saving'} onClick={discard}><X size={19}/></button></div>
       <label>Destination<select value={project} onChange={e=>{setProject(e.target.value);setParent('');}}><option value="">New project</option>{library.projects.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></label>
       {current?<>{!!current.takes.length&&<label>Branch from<select value={parent||current.takes[0]?.id} onChange={e=>setParent(e.target.value)}>{current.takes.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label>}<label>Take name<input value={name} onChange={e=>setName(e.target.value)}/></label><small>Uses {current.title}’s {current.is_public?'public':'private'} visibility.</small></>:<>
         <label>Project name <input autoFocus value={title} maxLength={120} required placeholder="Name this recording" onChange={e=>setTitle(e.target.value)}/></label>
         <fieldset className="visibility"><legend>Project visibility · required</legend>{['private','public'].map(v=><label key={v}><input type="radio" name="visibility" value={v} required checked={visibility===v} onChange={()=>setVisibility(v)}/>{v==='private'?'Private':'Public'}</label>)}</fieldset></>}
       <label>Mood (optional)<input value={mood} maxLength={60} placeholder="e.g. Warm, restless, reflective" onChange={e=>setMood(e.target.value)}/></label>
-      {error&&<p role="alert" className="error">{error}</p>}<div className="actions"><button className="btn primary" disabled={!take||phase!=='idle'}>{phase==='analysing'?'Reading audio…':phase==='saving'?'Saving…':'Save to dashboard'}</button><button type="button" disabled={phase==='saving'} className="btn" onClick={()=>setFiling(false)}>Review audio</button><button type="button" disabled={phase==='saving'} className="btn danger" onClick={discard}>Discard take</button></div>
+      {error&&<p role="alert" className="error">{error}</p>}<small className="dialog-note">Cancel deletes this recording. Choose Review audio to listen before saving.</small><div className="actions"><button className="btn primary" disabled={!take||phase!=='idle'}>{phase==='analysing'?'Reading audio…':phase==='saving'?'Saving…':'Save to dashboard'}</button><button type="button" disabled={phase==='saving'} className="btn" onClick={()=>setFiling(false)}>Review audio</button><button type="button" disabled={phase==='saving'} className="btn danger" onClick={discard}>Cancel &amp; delete take</button></div>
     </form></FileDialog>}
     {error&&!filing&&<p role="alert" className="error">{error}</p>}</section>;
 }
