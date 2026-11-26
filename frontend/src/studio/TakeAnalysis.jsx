@@ -6,23 +6,21 @@ import {audioSource} from './playback';
 
 const hz=v=>v>=1000?`${(v/1000).toFixed(1)} kHz`:`${Math.round(v)} Hz`;
 const time=v=>`${clock(Math.floor(Math.round(v*10)/10))}.${Math.round(v*10)%10}`;
-const evidence=v=>!Number.isFinite(v)?'Estimate':v>=.72?'Strong evidence':v>=.45?'Moderate evidence':'Tentative';
 const level=(v,unit)=>Number.isFinite(v)?`${v.toFixed(1)} ${unit}`:'—';
 export function AnalysisPanel({meta,clip,status='',name='take',onPreview}){
   const balance=meta?.bandBalance;
   const readings=[
-    ['Tempo',meta?.bpm?`${meta.bpm} BPM`:meta?'Unclear':'—',meta?.bpm?evidence(meta.tempoConfidence):'Needs a steady pulse'],
-    ['Musical key',meta?.key||(meta?'Unclear':'—'),meta?.key?evidence(meta.keyConfidence):'Needs tonal material'],
-    ['Frequency span',meta?.freq_min&&meta?.freq_max?`${hz(meta.freq_min)} – ${hz(meta.freq_max)}`:'—','Central 90% of spectral power'],
-    ['Dynamics',level(meta?.dynamicRangeDb,'dB'),'Quiet-to-loud level spread'],
-    ['Average level',level(meta?.rmsDbfs,'dBFS'),'RMS across the take'],
-    ['Peak level',level(meta?.peakDbfs,'dBFS'),'Highest sample in analysis mix'],
+    ['Tempo',meta?.bpm?`${meta.bpm} BPM`:meta?'Unclear':'—'],
+    ['Musical key',meta?.key||(meta?'Unclear':'—')],
+    ['Frequency span',meta?.freq_min&&meta?.freq_max?`${hz(meta.freq_min)} – ${hz(meta.freq_max)}`:'—'],
+    ['Dynamics',level(meta?.dynamicRangeDb,'dB')],
+    ['Average level',level(meta?.rmsDbfs,'dBFS')],
+    ['Peak level',level(meta?.peakDbfs,'dBFS')],
   ];
   const bounds=clip&&Number.isFinite(meta?.hookStart)&&Number.isFinite(meta?.hookEnd);
   return <article className="panel analysis"><div className="panel-head"><Activity/>Audio analysis</div><div className="inset">
     <p role="status">{status||(meta?`Analysed on this device · ${clock(meta.duration||0)} · ${meta.channels===1?'Mono':meta.channels===2?'Stereo':`${meta.channels||1} ch`}`:'Record or upload audio to see its musical and mix profile.')}</p>
-    <div className="readouts">{readings.map(([k,v,hint])=><div key={k}><small className="micro">{k}</small><strong>{v}</strong><span className="metric-hint">{hint}</span></div>)}</div>
-    {meta?.tempoCandidates?.length>1&&<small className="pulse-options">Other pulse interpretations: {meta.tempoCandidates.slice(1).join(' / ')} BPM.</small>}
+    <div className="readouts">{readings.map(([k,v])=><div key={k}><small className="micro">{k}</small><strong>{v}</strong></div>)}</div>
     {meta?.tags&&<details className="track-tags"><summary>Embedded track details</summary>
       <p>{[meta.tags.artist,meta.tags.title].filter(Boolean).join(' · ')}</p>
       <p>{[meta.tags.bpm&&`Tagged tempo: ${meta.tags.bpm} BPM`,meta.tags.key&&`Tagged key: ${meta.tags.key}`].filter(Boolean).join(' · ')}</p>

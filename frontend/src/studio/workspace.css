@@ -36,9 +36,14 @@
 .analysis .readouts { grid-template-columns:repeat(3,minmax(0,1fr)) }.analysis .readouts>div {padding:13px 10px}.analysis .readouts strong {font-size:clamp(15px,1.5vw,21px);overflow-wrap:anywhere}
 .analysis .readouts small { font-size:9px;letter-spacing:.06em }
 .analysis .inset>p {font-size:14px}.analysis h3 {margin-top:16px}
-.metric-hint {display:block;margin-top:6px;color:#62695c;font-size:11px;line-height:1.4}
-.pulse-options,.track-tags {display:block;margin-top:12px;color:#566051;font-size:12px}
+.track-tags {display:block;margin-top:12px;color:#566051;font-size:12px}
 .track-tags summary {cursor:pointer;font-weight:600}.track-tags p {margin:5px 0}.track-tags p:empty{display:none}
+.feature-guide {margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
+.feature-guide h3 {margin:0 0 10px}
+.feature-guide dl {display:grid;grid-template-columns:1fr 1fr;gap:9px 22px;margin:0}
+.feature-guide dl>div {display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline}
+.feature-guide dt {font:600 10px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:#3f513d;white-space:nowrap}
+.feature-guide dd {margin:0;color:#566051;font-size:12px;line-height:1.45}
 .analysis .mix-balance,.analysis .hook-preview {margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
 .analysis .mix-balance h3,.analysis .hook-preview h3 {margin:0 0 10px}
 .analysis .mix-balance p,.analysis .hook-preview p {font-size:13px;line-height:1.5}
@@ -47,7 +52,7 @@
 .band-legend {display:flex;justify-content:space-between;gap:6px;margin-top:7px;font:11px var(--mono);text-transform:capitalize;color:#485242}
 .clip-range {display:inline-block;margin:0 0 6px;color:var(--green);font:600 14px var(--mono)}
 .analysis .hook-preview audio {display:block;width:100%;margin:10px 0}
-@media(max-width:600px){.analysis .readouts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.analysis .readouts{grid-template-columns:repeat(2,minmax(0,1fr))}.feature-guide dl{grid-template-columns:1fr}}
 /* Discard and delete controls */
 .dialog-head {display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
 .dialog-head>div {min-width:0}

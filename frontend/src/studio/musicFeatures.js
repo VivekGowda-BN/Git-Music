@@ -112,7 +112,7 @@ function tempo(samples, rate) {
     // strong peak rather than mistaking every other identical beat for a beat.
     const score = (.80*ac[l]+.20*repeat) *
       (1-.055*Math.abs(Math.log2(bpm/115))) + .055*Math.log2(bpm/60);
-    candidates.push({ bpm, score, strength: ac[l] });
+    candidates.push({ bpm, score, strength: ac[l], lag: l });
   }
   candidates.sort((a,b) => b.score-a.score);
   let best = candidates[0];
@@ -132,8 +132,20 @@ function tempo(samples, rate) {
     return Math.abs(ratio-Math.round(ratio)) > .07;
   });
   const clarity = rival ? clamp((best.score-rival.score)/.23) : 1;
-  const confidence = clamp((best.strength-.12)/.75) * (.45+.55*clarity);
-  if (confidence < .20) return { ...empty, tempoConfidence: confidence };
+  // A smooth short-lag trend raises the whole autocorrelation curve, so the
+  // absolute height of a peak says little. What matters is how far it stands
+  // above the neighbouring troughs: a clear beat produces a sharp peak even in
+  // a quiet mix, while noise produces only a shallow ripple.
+  const reach = Math.max(2, Math.round(best.lag*.2));
+  let valley = best.strength;
+  for (let l = Math.max(2, best.lag-reach); l <= Math.min(maxLag, best.lag+reach); l++) {
+    valley = Math.min(valley, ac[l]);
+  }
+  const prominence = Math.max(0, best.strength-valley);
+  const confidence = clamp(prominence/.35) * (.5+.5*clarity);
+  // Noise has many comparable peaks, so no single period dominates. A clear
+  // pulse stands well clear of its strongest unrelated rival.
+  if (clarity < .25 || confidence < .20) return { ...empty, tempoConfidence: confidence };
   const bpm = Math.round(best.bpm);
   return {
     bpm, tempoConfidence: confidence,

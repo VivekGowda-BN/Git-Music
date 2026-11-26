@@ -73,6 +73,14 @@ export default function Capture(){
       <button className="plain" disabled={phase!=='idle'} onClick={()=>file.current.click()}><Upload size={15}/> Upload audio</button><input hidden type="file" ref={file} accept="audio/*,.wav,.mp3,.flac" onChange={e=>{pick(e.target.files[0]);e.target.value='';}}/>
        <small>Drop audio here · WAV, MP3 or FLAC · up to 80 MB</small></div>
       {take&&<div className="inset"><label>Full take<audio controls src={take.url}/></label></div>}
+      <div className="feature-guide"><h3>Reading the analysis</h3><dl>
+        <div><dt>Tempo</dt><dd>Beats per minute, shown when the take has a steady pulse.</dd></div>
+        <div><dt>Musical key</dt><dd>The major or minor key the notes point to.</dd></div>
+        <div><dt>Frequency span</dt><dd>The range carrying the central 90% of spectral energy.</dd></div>
+        <div><dt>Dynamics</dt><dd>The spread between quiet and loud passages.</dd></div>
+        <div><dt>Levels</dt><dd>Average and peak loudness; 0 dBFS is digital full scale.</dd></div>
+        <div><dt>Balance</dt><dd>The share of energy in low, mid and high frequencies.</dd></div>
+      </dl></div>
      </article><AnalysisPanel meta={take?.meta} clip={take?.clip} name={name} status={phase==='analysing'?'Listening for pulse, tonal centre, and a highlight…':''}/></div>
      {phase==='analysing'&&<button className="btn resume-file" onClick={()=>{job.current?.abort();job.current=null;setPhase('idle');}}>Cancel analysis</button>}
     {take&&!filing&&<button className="btn primary resume-file" onClick={()=>setFiling(true)}><GitBranch size={16}/> Save this take</button>}

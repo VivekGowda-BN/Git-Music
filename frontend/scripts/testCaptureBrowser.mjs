@@ -205,6 +205,8 @@ try {
   for (const file of songs) {
     await run(`song upload → save → reopen: ${basename(file)}`,async page => {
       const {profile,duration} = await uploadCase(page,file);
+      if (basename(file) === 'the-nights-excerpt.mp3')
+        near(parseFloat(profile.values.Tempo),124,2,'known song tempo');
       await saveAndReopen(page,profile,duration,`Browser test ${basename(file).slice(0,80)}`);
       return summary(profile);
     });

@@ -8,11 +8,14 @@ const LOW_HZ = 250;
 const HIGH_HZ = 2000;
 const CROSSOVER_HZ = 100;
 const MAX_HIGHLIGHT = 15;
-const MIN_REPEAT = 3;
-const MIN_LAG = 1.5;
+const HIGHLIGHT_STEP = .5;
+const HIGHLIGHT_GAP = 17;
 const CHROMA_LOW_HZ = 150;
 const CHROMA_HIGH_HZ = 4000;
-const SIMILARITY = 0.82;
+// Choruses cluster in the first half of most songs. This is a gentle prior, not
+// a rule: repetition and energy still decide which passage is chosen.
+const CHORUS_POSITION = .34;
+const CHORUS_SPREAD = .18;
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const db = v => 20 * Math.log10(v);
@@ -190,93 +193,63 @@ function similarity(chroma, a, b) {
   return na > 0 && nb > 0 ? dot / Math.sqrt(na * nb) : 0;
 }
 
+// Unit-length, zero-mean vectors make a dot product equal to a correlation.
+function centred(values) {
+  let mean = 0;
+  for (const value of values) mean += value;
+  mean /= Math.max(1, values.length);
+  const out = new Float64Array(values.length);
+  let norm = 0;
+  for (let i = 0; i < values.length; i++) {
+    out[i] = values[i] - mean;
+    norm += out[i] * out[i];
+  }
+  norm = Math.sqrt(norm);
+  if (norm > 0) for (let i = 0; i < out.length; i++) out[i] /= norm;
+  return out;
+}
+
+function cosine(a, b) {
+  let dot = 0;
+  for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
+  return dot;
+}
+
+// Longest audible stretch in [from, to]. Brief dropouts (under 0.6 s) are
+// bridged so a single quiet beat does not split a phrase in two.
+function longestRun(active, from, to, frameRate) {
+  const bridge = Math.max(1, Math.round(.3 * frameRate));
+  let best = null, start = -1, last = -1;
+  const close = () => {
+    if (start >= 0 && (!best || last - start > best.end - best.start)) best = {start, end: last};
+    start = -1;
+  };
+  for (let f = from; f <= to; f++) {
+    if (active[f]) {
+      if (start < 0) start = f;
+      last = f;
+    } else if (start >= 0 && f - last > bridge) {
+      close();
+    }
+  }
+  close();
+  return best;
+}
+
 function highlightOf(frames, rate) {
   const {hop, count, rms, chroma, peakRms} = frames;
   const frameRate = rate / hop;
-  const threshold = Math.max(peakRms * .01, 1e-6);
-  const active = new Uint8Array(count);
-  for (let i = 0; i < count; i++) active[i] = rms[i] >= threshold ? 1 : 0;
-  const minLag = Math.max(1, Math.round(MIN_LAG * frameRate));
-  const minFrames = Math.max(1, Math.round(MIN_REPEAT * frameRate));
+  const width = Math.min(count, Math.round(MAX_HIGHLIGHT * frameRate));
+  const step = Math.max(1, Math.round(HIGHLIGHT_STEP * frameRate));
   const maxFrames = Math.max(1, Math.floor(MAX_HIGHLIGHT * frameRate));
 
-  // For each lag, keep the two longest matching diagonals. Keeping two avoids
-  // a loud sustained drone masking a shorter repeated musical phrase at the
-  // same lag. Runs are rejected later if they are too stationary to be music.
-  const candidates = [];
-  for (let lag = minLag; lag < count; lag++) {
-    let runStart = -1, runLen = 0, best1 = null, best2 = null;
-    const consider = () => {
-      if (runLen < minFrames) return;
-      const candidate = {start: runStart, end: runStart + runLen - 1, len: runLen};
-      if (!best1 || candidate.len > best1.len) {
-        best2 = best1;
-        best1 = candidate;
-      } else if (!best2 || candidate.len > best2.len) {
-        best2 = candidate;
-      }
-    };
-    for (let i = 0; i + lag < count; i++) {
-      const j = i + lag;
-      const match = active[i] && active[j] && similarity(chroma, i * 12, j * 12) >= SIMILARITY;
-      if (match) {
-        if (runStart < 0) runStart = i;
-        runLen++;
-      } else {
-        consider();
-        runStart = -1;
-        runLen = 0;
-      }
-    }
-    consider();
-    if (best1) candidates.push(best1);
-    if (best2) candidates.push(best2);
+  const threshold = Math.max(peakRms * .01, 1e-6);
+  const active = new Uint8Array(count);
+  let activeFrames = 0;
+  for (let i = 0; i < count; i++) {
+    active[i] = rms[i] >= threshold ? 1 : 0;
+    activeFrames += active[i];
   }
-
-  let best = null;
-  for (const candidate of candidates) {
-    const start = candidate.start;
-    const end = Math.min(candidate.end, start + maxFrames - 1);
-    const len = end - start + 1;
-    if (len < minFrames) continue;
-    const mean = new Float64Array(12);
-    let energy = 0;
-    for (let f = start; f <= end; f++) {
-      const base = f * 12;
-      for (let pc = 0; pc < 12; pc++) mean[pc] += chroma[base + pc];
-      energy += rms[f] * rms[f];
-    }
-    let sum = 0;
-    for (let pc = 0; pc < 12; pc++) sum += mean[pc];
-    if (!(sum > 0)) continue;
-    let entropy = 0;
-    for (let pc = 0; pc < 12; pc++) {
-      const p = mean[pc] / sum;
-      if (p > 0) entropy -= p * Math.log2(p);
-    }
-    let variation = 0;
-    for (let f = start + 1; f <= end; f++) {
-      variation += 1 - similarity(chroma, (f - 1) * 12, f * 12);
-    }
-    variation /= Math.max(1, len - 1);
-    const level = Math.sqrt(energy / len) / Math.max(1e-9, peakRms);
-    // A sustained note repeats perfectly but has no melodic or harmonic
-    // contour. Requiring both spectral variety and change rejects it.
-    if (entropy < .7 || variation < .004) continue;
-    const duration = len / frameRate;
-    const score = duration * (.25 + entropy) * (.25 + variation) * (.5 + .5 * level);
-    if (!best || score > best.score) best = {score, start, end};
-  }
-
-  if (best) {
-    return {
-      startFrame: best.start,
-      endFrame: best.end,
-      reason: 'A passage that recurs, chosen for repetition and energy.',
-    };
-  }
-
-  // Fallback: the most energetic active region, trimmed to 15 seconds.
   const regions = [];
   let regionStart = -1;
   for (let i = 0; i <= count; i++) {
@@ -288,6 +261,86 @@ function highlightOf(frames, rate) {
     }
   }
   if (!regions.length) return null;
+
+  // Short active material leaves too little context to judge repetition.
+  // Compare fixed 15-second windows only when the take is long enough for the
+  // comparison to mean something.
+  if (activeFrames >= Math.round(20 * frameRate) && width >= Math.round(6 * frameRate)) {
+    const windows = [];
+    for (let start = 0; start + width <= count; start += step) {
+      const end = start + width;
+      const pitch = new Float64Array(12);
+      const envelope = [];
+      let energy = 0;
+      for (let f = start; f < end; f++) {
+        const base = f * 12;
+        for (let pc = 0; pc < 12; pc++) pitch[pc] += chroma[base + pc];
+        envelope.push(rms[f]);
+        energy += rms[f] * rms[f];
+      }
+      let sum = 0;
+      for (let pc = 0; pc < 12; pc++) sum += pitch[pc];
+      let entropy = 0;
+      if (sum > 0) {
+        for (let pc = 0; pc < 12; pc++) {
+          const p = pitch[pc] / sum;
+          if (p > 0) entropy -= p * Math.log2(p);
+        }
+      }
+      let variation = 0;
+      for (let f = start + 1; f < end; f++) {
+        variation += 1 - similarity(chroma, (f - 1) * 12, f * 12);
+      }
+      variation /= Math.max(1, end - start - 1);
+      windows.push({
+        start,
+        end: end - 1,
+        position: start / Math.max(1, count),
+        chroma: centred(pitch),
+        envelope: centred(envelope),
+        level: Math.sqrt(energy / Math.max(1, end - start)) / Math.max(1e-9, peakRms),
+        // A held note or drone repeats perfectly but has no harmonic contour.
+        musical: clamp(variation / .008, 0, 1) * clamp(entropy / .7, 0, 1),
+      });
+    }
+
+    if (windows.length) {
+      const gap = Math.max(1, Math.round(HIGHLIGHT_GAP * frameRate));
+      const levels = windows.map(window => window.level).sort((a, b) => a - b);
+      const median = levels[Math.floor(levels.length / 2)] || 1;
+      for (const window of windows) {
+        let repetition = 0;
+        for (const other of windows) {
+          if (other === window || Math.abs(other.start - window.start) < gap) continue;
+          const match = .65 * cosine(window.chroma, other.chroma) +
+            .35 * cosine(window.envelope, other.envelope);
+          if (match > repetition) repetition = match;
+        }
+        window.repetition = repetition;
+        const prior = .1 + .9 * Math.exp(-(((window.position - CHORUS_POSITION) / CHORUS_SPREAD) ** 2));
+        const relativeLevel = window.level / Math.max(1e-9, median);
+        window.score = repetition * window.musical * prior *
+          (1 + .2 * (relativeLevel - 1));
+      }
+      windows.sort((a, b) => b.score - a.score);
+      const best = windows[0];
+      if (best.repetition * best.musical >= .05) {
+        // Trim the window to its longest stretch of audible material so a
+        // chosen passage that ends early is not padded with silence.
+        const run = longestRun(active, best.start, best.end, frameRate);
+        const span = run && run.end - run.start + 1 >= Math.round(.4 * width) ? run : best;
+        return {
+          startFrame: span.start,
+          endFrame: span.end,
+          reason: best.repetition >= .40
+            ? 'A passage that recurs, chosen for repetition and energy.'
+            : 'A representative passage chosen for energy and contrast.',
+        };
+      }
+    }
+  }
+
+  // Fallback: the most energetic active region, trimmed to 15 seconds.
   const prefix = new Float64Array(count + 1);
   for (let i = 0; i < count; i++) prefix[i + 1] = prefix[i] + rms[i] * rms[i];
   let bestRegion = null;

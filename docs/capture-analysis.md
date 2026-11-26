@@ -6,7 +6,7 @@ or analysis API is called. The worker returns the readings shown in the panel:
 
 | Reading | What it measures |
 | --- | --- |
-| Tempo | Global pulse in BPM, with half/double interpretations |
+| Tempo | Global pulse in BPM; half/double alternatives remain in the data |
 | Musical key | Best-fitting major or minor key |
 | Frequency span | Central 90% of spectral power |
 | Dynamics | Quiet-to-loud spread of active frames |
@@ -28,11 +28,12 @@ BPM) are doubled only when a comparable peak exists at twice the period; this
 avoids reporting half-time on a 120 BPM track while leaving genuine slow pulses
 alone.
 
-Confidence measures the strength and clarity of the periodic evidence, not a
-probability. Below 0.20 the panel says **Unclear** rather than inventing a
-tempo. Between 0.20 and 0.45 it shows the estimate with **Tentative** evidence
-and lists the half/double interpretations, so an octave-ambiguous result is
-visible rather than hidden.
+Confidence measures how sharply the chosen period rises above the troughs
+around it, and how far it stands clear of unrelated rival periods. A smooth
+short-lag trend raises the whole autocorrelation curve, so the absolute height
+of a peak says little; a clear beat still produces a sharp peak in a quiet mix,
+while noise produces only shallow ripples. Below 0.20, or when no period
+dominates its rivals, the panel says **Unclear** rather than inventing a tempo.
 
 ## Key
 
@@ -77,16 +78,16 @@ reported tempo, which is the usual convention for metrical ambiguity.
 
 | Measure | Result |
 | --- | --- |
-| Answered | 13/15 (86.7%) |
-| Exact tempo | 10/15 (66.7%) |
-| Octave-tolerant tempo | 13/15 (86.7%) |
-| Exact among answered | 10/13 (76.9%) |
-| Octave-tolerant among answered | 13/13 (100%) |
+| Answered | 14/15 (93.3%) |
+| Exact tempo | 11/15 (73.3%) |
+| Octave-tolerant tempo | 14/15 (93.3%) |
+| Exact among answered | 11/14 (78.6%) |
+| Octave-tolerant among answered | 14/14 (100%) |
 
-The two octave-tolerant misses are both abstentions (RWC_R013 and RWC_R015);
-every track the detector answered was correct at the exact or octave level.
-Exact-only misses include metrical-level disagreements such as 75 vs 149 BPM
-and 200 vs 100 BPM. No key labels are available for this collection.
+The single octave-tolerant miss is an abstention (RWC_R013); every track the
+detector answered was correct at the exact or octave level. Exact-only misses
+include metrical-level disagreements such as 75 vs 149 BPM, 200 vs 100 BPM, and
+182 vs 90 BPM. No key labels are available for this collection.
 
 ### GuitarSet — solo guitar stress set
 
@@ -96,38 +97,39 @@ into the headline result.
 
 | Measure | Result |
 | --- | --- |
-| Tempo answered | 166/360 (46.1%) |
-| Exact tempo | 84/360 (23.3%) |
-| Octave-tolerant tempo | 129/360 (35.8%) |
-| Exact among answered | 84/166 (50.6%) |
-| Octave-tolerant among answered | 129/166 (77.7%) |
+| Tempo answered | 262/360 (72.8%) |
+| Exact tempo | 122/360 (33.9%) |
+| Octave-tolerant tempo | 194/360 (53.9%) |
+| Exact among answered | 122/262 (46.6%) |
+| Octave-tolerant among answered | 194/262 (74.0%) |
 | Key answered | 208/360 (57.8%) |
 | Exact key | 128/360 (35.6%) |
 | Exact key among answered | 128/208 (61.5%) |
 
 These are the full 360 recordings, covering comping and solo versions. They show
-the honest limit of the current estimators on solo material: the detector
-abstains often, and when it answers, octave-tolerant tempo agreement is 77.7%
-and exact key agreement is 61.5%. No claim of 85–95% accuracy is made for this
-set; it is a stress test, not the produced-song target.
+the honest limit of the current estimators on solo material: the detector still
+abstains on more than a quarter of takes, and when it answers, octave-tolerant
+tempo agreement is 74.0% and exact key agreement is 61.5%. No claim of 85–95%
+accuracy is made for this set; it is a stress test, not the produced-song
+target.
 
 ### Known song check
 
 The bundled Avicii “The Nights” excerpt is published as 126 BPM and F♯ major.
 The local analysis reports:
 
-- **124 BPM**, confidence 0.22 → **Tentative**, with 62 / 249 BPM alternatives
+- **124 BPM**, confidence 0.96, with 62 / 249 BPM alternatives in the data
 - **F♯ major**, confidence 1.00
-- highlight **00:04.1 – 00:19.1** (15 seconds)
+- highlight **00:17.0 – 00:32.0** (15 seconds), a recurring passage
 
-The 2 BPM difference is within the benchmark tolerance. The tentative label is
-intentional: the excerpt has a clear pulse but not the strong periodic evidence
-of a full-length produced track.
+The 2 BPM difference is within the benchmark tolerance. The excerpt is chosen
+from repetition, energy and position, not from a popularity lookup.
 
 ## Limitations
 
 - Tempo is metrically ambiguous. A half-time or double-time reading can be
-  musically valid; the panel lists both interpretations instead of hiding them.
+  musically valid; the data still carries the alternatives, but the panel shows
+  one reading rather than listing them.
 - Solo, rubato, and heavily syncopated material lowers confidence and coverage.
 - Key detection is less reliable on monophonic or modal material.
 - The highlight is signal-derived. There is no listener replay or popularity
