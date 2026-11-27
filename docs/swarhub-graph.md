@@ -2,6 +2,14 @@
 
 Start here for the active application. Follow the relevant edge to its source. Dependencies, recordings, the SQLite contents and generated bundles are not source nodes.
 
+## Current handoff
+
+- Dashboard starts empty. Saving a recording or upload creates a dated card; discarding does not. `library.js` removes old demo takes while retaining real branches. Delete remains on the project detail page.
+- `Dashboard.jsx` → `projectCovers()` → `frontend/public/art/projects/`: twelve licensed Pexels photos, assigned across the full recorded library before filtering. Use every photo before recycling the set. Opportunities has its own separate images.
+- Capture includes the responsive analysis guide and the revised key estimator. See `docs/capture-analysis.md` for the method and its evaluation.
+- Verified: `node frontend/scripts/testProjectControls.mjs` passed, including decoding all 12 photos and checking their assignments after search and reload. Frontend lint and production build passed.
+- Resume: no outstanding implementation step for the cover change. Start any new task with a focused Graphify query as described in `AGENTS.md`.
+
 The [machine-readable source graph](swarhub-graph.json) indexes first-party modules, local imports and HTTP endpoints. `active-frontend` marks modules reachable from the live React entry. Regenerate after source topology changes with `node docs/build-source-graph.mjs`.
 
 ```mermaid
@@ -26,12 +34,13 @@ flowchart TD
   sound --> spectrum["spectrum.js · FFT energy band"]
   capture --> analysis["TakeAnalysis.jsx · measurements and best-part player"]
   dashboard --> analysis
+  dashboard --> covers["projectCover.js → public/art/projects · Dashboard photographs"]
   calls --> data["opportunities.js · hand-checked calls and nine sources"]
   calls --> marks["public/art/platforms · nine local platform marks"]
   artist --> activity["Contributions.jsx · studio activity calendar"]
   capture --> sound
   dashboard --> sound
-  capture --> library["library.js · sample repo and storage"]
+  capture --> library["library.js · scoped library, demo migration and audio storage"]
   shell --> library
   library --> local["localStorage · per-workspace takes, master selections, drafts, artist"]
   library --> blobs["IndexedDB · original audio + exported hook, keyed by take ID"]

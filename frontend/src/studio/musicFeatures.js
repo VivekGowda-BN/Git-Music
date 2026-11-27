@@ -1,11 +1,11 @@
 // Onset-envelope autocorrelation: https://www.ee.columbia.edu/~dpwe/pubs/Ellis07-beattrack.pdf
 // Spectral-peak chroma / profile matching: https://essentia.upf.edu/tutorial_tonal_hpcpkeyscale.html
-// Krumhansl-Kessler profiles below. Confidence measures evidence, not probability.
+// Temperley key profiles. Confidence measures evidence, not probability.
 const clamp = v => Math.max(0, Math.min(1, v));
 const noteNames = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 const profiles = [
-  [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88],
-  [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17],
+  [5, 2, 3.5, 2, 4.5, 4, 2, 4.5, 2, 3.5, 1.5, 4],
+  [5, 2, 3.5, 4.5, 2, 4, 2, 4.5, 3.5, 2, 1.5, 4],
 ];
 
 // Each lag is measured inside a contiguous window. Splicing distant sections
@@ -197,8 +197,11 @@ function tonality(samples, rate) {
   if (frames < 3) return empty;
   const hz = rate/length, lo = Math.max(2, Math.round(55/hz));
   const hi = Math.min(n/2-2, Math.ceil(2500/hz));
-  const spectrum = spectrumReader(n, stride), chroma = new Float64Array(12);
-  let voiced = 0;
+  const spectrum = spectrumReader(n, stride);
+  const histogram = () => ({chroma:new Float64Array(12), bass:new Float64Array(12), voiced:0});
+  const global = histogram();
+  const sectionCount = Math.min(8, Math.floor(frames/6), Math.floor(samples.length/(6*rate)));
+  const sections = Array.from({length:sectionCount}, histogram);
   for (let i = 0; i < frames; i++) {
     const mag = spectrum(samples, Math.round(i*(samples.length-length)/(frames-1)));
     let peak = 0, bandPower = 0;
@@ -208,7 +211,7 @@ function tonality(samples, rate) {
     }
     if (!(peak > n*1e-6)) continue;
     const bins = new Float64Array(12), peaks = [];
-    let tonalPower = 0, total = 0;
+    let tonalPower = 0, total = 0, bassNote = -1;
     for (let b = lo; b <= hi; b++) {
       const v = mag[b];
       if (v < peak*.07 || v <= mag[b-1] || v < mag[b+1]) continue;
@@ -219,6 +222,7 @@ function tonality(samples, rate) {
       const a = Math.log(mag[b-1]+1e-15), c = Math.log(mag[b+1]+1e-15);
       const freq = hz*(b+.5*(a-c)/(a+c-2*Math.log(v)));
       const midi = 69+12*Math.log2(freq/440), note = Math.round(midi);
+      if (bassNote < 0 && freq < 330 && v >= .20*peak) bassNote = (note%12+12)%12;
       let weight = v;
       // Discount upper partials of strong lower fundamentals. Without this a
       // single harmonically rich note can masquerade as a complete major chord.
@@ -233,17 +237,56 @@ function tonality(samples, rate) {
       total += weight;
       tonalPower += v*v+mag[b-1]**2+mag[b+1]**2;
     }
-    if (!total || tonalPower < .50*bandPower) continue;
-    voiced++;
+    if (!total || tonalPower < .35*bandPower) continue;
     const scale = Math.sqrt(peak)/total;
-    for (let pc = 0; pc < 12; pc++) chroma[pc] += bins[pc]*scale;
+    const section = sections[Math.floor(i*sectionCount/frames)];
+    for (const target of section ? [global,section] : [global]) {
+      target.voiced++;
+      for (let pc = 0; pc < 12; pc++) target.chroma[pc] += bins[pc]*scale;
+      if (bassNote >= 0) target.bass[bassNote] += Math.sqrt(peak);
+    }
   }
-  if (voiced < 3) return empty;
+  const ranking = keyFits(global);
+  const best = ranking[0];
+  if (best?.confidence >= .40) return {key:best.key, keyConfidence:best.confidence};
+
+  // A loud intro, solo, or contrasting bridge can make two full-track fits
+  // almost tie. Look for an independently supported key across sections.
+  const votes = new Map();
+  let votingSections = 0;
+  for (const section of sections) {
+    const [local] = keyFits(section);
+    if (!local || local.confidence < .40) continue;
+    votingSections++;
+    votes.set(local.key, (votes.get(local.key) || 0) + 1);
+  }
+  for (const candidate of ranking.slice(0,3)) {
+    const count = votes.get(candidate.key) || 0;
+    if (count >= 2 && count > votingSections/2 && candidate.evidence >= .4)
+      return {key:candidate.key, keyConfidence:candidate.evidence*count/sections.length};
+  }
+  if (!best) {
+    for (const [key,count] of votes) {
+      if (count >= 3 && count >= sections.length/2 && count >= 2*votingSections/3)
+        return {key, keyConfidence:count/sections.length};
+    }
+    return empty;
+  }
+  // Strong tonal material can support a key even when the runner-up is
+  // close. Retain the measured confidence so the UI can mark it as estimated.
+  if (best.evidence >= .45 || (best.confidence >= .15 && votes.has(best.key)))
+    return {key:best.key, keyConfidence:best.confidence};
+  return {...empty, keyConfidence:best.confidence};
+}
+
+function keyFits({chroma,bass,voiced}) {
+  if (voiced < 3) return [];
   const total = chroma.reduce((s,x) => s+x, 0);
   for (let i = 0; i < 12; i++) chroma[i] /= total;
-  if ([...chroma].sort((a,b) => b-a)[2] < .065) return empty;
+  if ([...chroma].sort((a,b) => b-a)[2] < .065) return [];
   const norm = Math.sqrt(chroma.reduce((s,x) => s+(x-1/12)**2, 0));
-  if (norm < .08) return empty;
+  if (norm < .08) return [];
+  const bassWeight = bass.reduce((sum, value) => sum + value, 0);
   const fits = [];
   for (const [mode, profile] of profiles.entries()) {
     const mean = profile.reduce((s,x) => s+x)/12;
@@ -252,16 +295,19 @@ function tonality(samples, rate) {
       let fit = 0;
       for (let pc = 0; pc < 12; pc++)
         fit += (profile[pc]-mean)*(chroma[(root+pc)%12]-1/12);
-      fits.push({ root, mode, fit: fit/(norm*profileNorm) });
+      // Give the tonic and dominant heard in the bass a vote when melodic
+      // evidence alone points almost equally to two relative keys.
+      const bassFit = bassWeight ? (bass[root]+.5*bass[(root+7)%12])/bassWeight : 0;
+      fit /= norm*profileNorm;
+      const support = Math.min(chroma[root], chroma[(root+(mode ? 3 : 4))%12]);
+      const evidence = Math.min(clamp((fit-.35)/.50), clamp(support/.08), clamp(norm/.18));
+      fits.push({key:`${noteNames[root]} ${mode ? 'minor' : 'major'}`, evidence, score: fit + .45*bassFit});
     }
   }
-  fits.sort((a,b) => b.fit-a.fit);
-  const best = fits[0], gap = best.fit-fits[1].fit;
-  const support = Math.min(chroma[best.root], chroma[(best.root+(best.mode ? 3 : 4))%12]);
-  const keyConfidence = clamp((best.fit-.35)/.55) * clamp(gap/.12) *
-    clamp(support/.07) * clamp(norm/.18);
-  const key = keyConfidence >= .40 ? `${noteNames[best.root]} ${best.mode ? 'minor' : 'major'}` : null;
-  return { key, keyConfidence };
+  fits.sort((a,b) => b.score-a.score);
+  const best = fits[0], gap = best.score-fits[1].score;
+  best.confidence = best.evidence * clamp(gap/.065);
+  return fits;
 }
 
 /**

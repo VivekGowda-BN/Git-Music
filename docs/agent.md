@@ -7,13 +7,13 @@
 
 ## 0. First-Things-First Protocol
 
-For the active SwarHub frontend, start with [the project knowledge graph](swarhub-graph.md). Follow its file and data-flow edges for the task at hand. The older generated graph below describes the previous frontend.
+Follow the repository's [graph-first workflow](../AGENTS.md). Start with the current handoff in the [project knowledge graph](swarhub-graph.md). Graphify indexes both active and older modules; use the active-source map to distinguish them.
 
 Before any codebase exploration, run:
 ```bash
 graphify query "<your question>"
 ```
-If `graphify-out/graph.json` doesn't exist, run `graphify . --code-only` first.  
+If `graphify-out/graph.json` doesn't exist, run `graphify update .` first.
 **Never read the entire project by globbing or reading unrelated files.**
 
 ---

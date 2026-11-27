@@ -1,12 +1,35 @@
 import {useEffect,useRef,useState} from 'react';
 import {Link,useNavigate,useOutletContext,useSearchParams} from 'react-router-dom';
-import { ArrowLeft,ArrowUpRight,Check,Compass,Disc3,GitBranch,GitMerge,Headphones,History,Mic,Play,Search,Square,Trash2 } from 'lucide-react';
+import { ArrowLeft,ArrowUpRight,Check,Compass,GitBranch,GitMerge,Headphones,History,Mic,Play,Search,Square,Trash2 } from 'lucide-react';
 import axios from 'axios';
 import {clock} from './audio';
 import {audioSource} from './playback';
 import {SavedAnalysis} from './TakeAnalysis';
 import {removeMedia} from './library';
+import {projectCovers} from './projectCover';
 import {API_URL,getAuthHeaders} from '../lib/api';
+
+const dateFormat = new Intl.DateTimeFormat(undefined,{year:'numeric',month:'short',day:'numeric'});
+
+function ProjectCard({project,cover}) {
+  let latest = null;
+  for (const take of project.takes) {
+    if (!take.created || take.part) continue;
+    // SQLite CURRENT_TIMESTAMP is UTC but omits the time-zone suffix.
+    const stamp = String(take.created).replace(/^(\d{4}-\d\d-\d\d) (\d\d:\d\d:\d\d)$/, '$1T$2Z');
+    const date = new Date(stamp);
+    if (Number.isFinite(date.getTime()) && (!latest || date > latest)) latest = date;
+  }
+  return <Link className="project-card sleeve-card" to={`/dashboard?project=${project.id}`}>
+    <img className="sleeve-art" src={cover} alt="" loading="lazy"/>
+    <div className="sleeve-body">
+      {latest ? <time className="micro" dateTime={latest.toISOString()}>{dateFormat.format(latest)}</time>
+        : <small className="micro">Date unavailable</small>}
+      <h3>{project.title}</h3>
+      <div className="between"><span><GitBranch size={14}/> {project.takes.length} {project.takes.length===1?'take':'takes'} · {project.is_public?'Public':'Private'}</span><ArrowUpRight size={18}/></div>
+    </div>
+  </Link>;
+}
 
 export function Topology({takes,selected,select}){
   const [offsets,setOffsets]=useState({}),drag=useRef(null);
@@ -32,11 +55,7 @@ function Repository({project,initial,library,update}){
   const current=takes.find(t=>t.id===selected)||takes[0];
   const navigate=useNavigate();
   function branch(){
-    let pid=project.id;
-    if(project.remote){
-      pid=crypto.randomUUID();update(l=>({...l,projects:[{...project,id:pid,remote:false,is_public:false},...l.projects]}));
-    }
-    navigate(`/capture?project=${pid}${current?`&parent=${current.id}`:''}`);
+    navigate(`/capture?project=${project.id}${current?`&parent=${current.id}`:''}`);
   }
   function stop(){generation.current++;players.current.forEach(({player,source})=>{player.pause();if(source.temporary)URL.revokeObjectURL(source.url);});players.current=[];setPlaying(false);}
   useEffect(()=>()=>{generation.current++;players.current.forEach(({player,source})=>{player.pause();if(source.temporary)URL.revokeObjectURL(source.url);});},[]);
@@ -68,7 +87,9 @@ export default function Dashboard(){
   const {library,update,remote,removeRemote,accountError}=useOutletContext(),[query]=useSearchParams(),navigate=useNavigate(),projects=[...library.projects,...remote],project=projects.find(p=>p.id===query.get('project'));
   const [search,setSearch]=useState('');
   const [confirmDelete,setConfirmDelete]=useState(false),[deleting,setDeleting]=useState(false),[deleteError,setDeleteError]=useState('');
-  const visible=projects.filter(p=>p.title.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())).sort((a,b)=>Number(!!a.demo)-Number(!!b.demo));
+  const recorded=projects.filter(p=>p.takes.some(t=>!t.part));
+  const covers=projectCovers(recorded);
+  const visible=recorded.filter(p=>p.title.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   async function deleteProject(){
     setDeleting(true);setDeleteError('');
     try{
@@ -92,14 +113,13 @@ export default function Dashboard(){
       {deleteError&&<p role="alert" className="error">{deleteError}</p>}
       {confirmDelete?<div className="actions"><button className="btn danger" disabled={deleting} onClick={deleteProject}>{deleting?'Deleting…':'Delete permanently'}</button><button className="btn" disabled={deleting} onClick={()=>setConfirmDelete(false)}>Cancel</button></div>:<button className="btn danger" onClick={()=>setConfirmDelete(true)}><Trash2 size={15}/> Delete project</button>}
     </div></details></section>;
-  function card(p){const num=projects.indexOf(p);return <Link className="project-card sleeve-card" key={p.id} to={`/dashboard?project=${p.id}`}>
-    <div className={`sleeve-art ink-${num%3}`} aria-hidden="true"><i/><b/><Disc3/></div>
-    <div className="sleeve-body"><small className="micro">{p.demo?'Studio arrangement':p.remote?'Account project':'Local recording'}</small><h3>{p.title}</h3><div className="between"><span><GitBranch size={14}/> {p.takes.length} {p.takes.length===1?'take':'takes'} · {p.is_public?'Public':'Private'}</span><ArrowUpRight size={18}/></div></div></Link>;}
   return <section className="work wrap shelf"><div className="title-row"><div><h1>Your projects<span>.</span></h1><p className="intro">Every take, filed by song.</p></div><Link to="/capture" className="btn primary"><Mic size={16}/> Open capture</Link></div>
     {accountError&&<p role="status" className="error">{accountError}</p>}
     <div className="shelf-tools"><label className="search-projects"><Search size={18}/><input type="search" aria-label="Search projects" placeholder="Search your projects…" value={search} onChange={e=>setSearch(e.target.value)}/></label>
       <Link className="btn" to="/feed"><Compass size={16}/> Explore</Link></div>
-    <div className="project-cards" aria-label="Project library">{visible.map(card)}</div>
-    {!visible.length&&<div className="empty-library"><p>No projects match “{search}”.</p><button className="btn" onClick={()=>setSearch('')}>Clear search</button></div>}
+    {visible.length>0&&<div className="project-cards" aria-label="Project library">{visible.map(p=><ProjectCard key={p.id} project={p} cover={covers.get(p.id)}/>)}</div>}
+    {!recorded.length
+      ? <div className="empty-library"><Mic aria-hidden="true"/><div><h3>No recordings yet</h3><p>Record or upload a take in Capture, then save it to see it here.</p></div></div>
+      : !visible.length&&<div className="empty-library"><p>No projects match “{search}”.</p><button className="btn" onClick={()=>setSearch('')}>Clear search</button></div>}
     </section>;
 }

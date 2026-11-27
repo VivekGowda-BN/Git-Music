@@ -19,7 +19,7 @@ export function demoAudio(part='mix') {
   const url=URL.createObjectURL(wav([renderSong(part)],song.rate));samples.set(part,url);return url;
 }
 
-export const analysisVersion=2;
+export const analysisVersion=4;
 
 // Analyse a mono fold-down; retain the original channels for listening/export.
 // Opposite-polarity stereo can disappear in mono, so use the strongest channel

@@ -7,6 +7,8 @@ description: Consult the graphify knowledge graph at graphify-out/ for codebase 
 
 This project has a graphify knowledge graph at graphify-out/.
 
+Follow `AGENTS.md` for the mandatory start, refresh and handoff procedure, including changes to documents and assets.
+
 Rules:
 - For codebase or architecture questions, when `graphify-out/graph.json` exists, first run `graphify query "<question>"` (CLI) or `query_graph` (MCP). Use `graphify path "<A>" "<B>"` / `shortest_path` for relationships and `graphify explain "<concept>"` / `get_node` for focused concepts. These return a scoped subgraph, usually much smaller than `GRAPH_REPORT.md` or raw grep output.
 - If graphify-out/wiki/index.md exists, navigate it instead of reading raw files

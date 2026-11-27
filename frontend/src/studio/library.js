@@ -1,20 +1,3 @@
-import {song,songDuration} from './song';
-
-export const demoProject = {
-  id:'scarborough-fair',title:song.title,is_public:true,demo:true,
-  takes:[
-    {id:'main',name:'First sketch',part:'guitar',parent:null,instrument:'Acoustic guitar'},
-    {id:'keys',name:'Bass layer',part:'keys',parent:'main',instrument:'Bass'},
-    {id:'melody',name:'Folk melody',part:'melody',parent:'main',instrument:'Flute'},
-  ].map(t=>({...t,bpm:song.bpm,key:song.key,mood:'Reflective',duration:songDuration,rate:song.rate,created:'Studio demo'}))
-};
-// Small playable fixtures for the preview artist; never added to a real account.
-const previewSessions=[
-  ['tidal-room','Tidal Room','tide',84,'G major','Calm'],
-  ['after-hours','After Hours','afterhours',104,'A minor','Restless'],
-].map(([id,title,part,bpm,key,mood])=>({id,title,is_public:true,demo:true,takes:[
-  {id:`${id}-root`,name:'Room sketch',part,parent:null,bpm,key,mood,duration:16*60/bpm,rate:song.rate,created:'Studio demo'}
-]}));
 function database() {
   return new Promise((resolve,reject)=>{const r=indexedDB.open('swarhub-audio',1);r.onupgradeneeded=()=>r.result.createObjectStore('takes');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
 }
@@ -29,13 +12,28 @@ export async function removeMedia(key) {
     tx.oncomplete=()=>{db.close();resolve();};tx.onabort=()=>{db.close();reject(tx.error);};});
 }
 export function loadLibrary(scope) {
+  const empty = {projects:[],applications:[],artist:{name:'',bio:'',gear:''},mixes:{}};
   try {
     const saved=JSON.parse(localStorage.getItem(`swarhub:${scope}`));
     if(saved&&Array.isArray(saved.projects)){
-      saved.projects=saved.projects.map(p=>p.demo&&p.title==='Janam'?{...p,title:song.title,takes:p.takes.map(t=>demoProject.takes.find(v=>v.id===t.id&&v.part===t.part)||t)}:p);
-      if(scope==='guest'&&saved.projects.length)saved.projects.push(...previewSessions.filter(p=>!saved.projects.some(v=>v.id===p.id)));
-      return {projects:[],applications:[],artist:{name:'',bio:'',gear:''},mixes:{},...saved};
+      const mixes = {...saved.mixes};
+      const projects = saved.projects.flatMap(project => {
+        if (!project.demo) return [project];
+        // Users could record real branches under the old starter projects.
+        const recorded = project.takes.filter(t => !(t.part && t.created === 'Studio demo'));
+        const ids = new Set(recorded.map(t => t.id));
+        const mix = mixes[project.id];
+        if (mix) {
+          const remaining = mix.ids.filter(id => ids.has(id));
+          if (remaining.length) mixes[project.id] = {...mix, ids:remaining};
+          else delete mixes[project.id];
+        }
+        if (!recorded.length) return [];
+        const takes = recorded.map(t => t.parent && !ids.has(t.parent) ? {...t,parent:null} : t);
+        return [{...project,demo:false,takes}];
+      });
+      return {...empty,...saved,projects,mixes};
     }
   } catch { /* New workspace */ }
-  return {projects:scope==='guest'?[demoProject,...previewSessions]:[demoProject],applications:[],artist:{name:'',bio:'',gear:''},mixes:{}};
+  return empty;
 }

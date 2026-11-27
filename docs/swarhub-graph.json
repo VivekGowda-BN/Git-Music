@@ -5,6 +5,10 @@
       "group": "backend"
     },
     {
+      "id": "backend/jwtSecret.js",
+      "group": "backend"
+    },
+    {
       "id": "backend/middleware/authMiddleware.js",
       "group": "backend"
     },
@@ -25,11 +29,35 @@
       "group": "frontend"
     },
     {
+      "id": "frontend/scripts/benchmarkHighlights.mjs",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/scripts/benchmarkTempoKey.mjs",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/scripts/testCaptureBrowser.mjs",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/scripts/testProjectControls.mjs",
+      "group": "frontend"
+    },
+    {
       "id": "frontend/src/App.css",
       "group": "previous-frontend"
     },
     {
       "id": "frontend/src/App.jsx",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/__tests__/musicFeatures.test.js",
+      "group": "previous-frontend"
+    },
+    {
+      "id": "frontend/src/__tests__/signalProfile.test.js",
       "group": "previous-frontend"
     },
     {
@@ -161,6 +189,10 @@
       "group": "active-frontend"
     },
     {
+      "id": "frontend/src/studio/analysis.worker.js",
+      "group": "previous-frontend"
+    },
+    {
       "id": "frontend/src/studio/audio.js",
       "group": "active-frontend"
     },
@@ -181,6 +213,10 @@
       "group": "active-frontend"
     },
     {
+      "id": "frontend/src/studio/musicFeatures.js",
+      "group": "previous-frontend"
+    },
+    {
       "id": "frontend/src/studio/opportunities.css",
       "group": "active-frontend"
     },
@@ -193,12 +229,20 @@
       "group": "active-frontend"
     },
     {
+      "id": "frontend/src/studio/projectCover.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/studio/signalProfile.js",
+      "group": "previous-frontend"
+    },
+    {
       "id": "frontend/src/studio/song.js",
       "group": "active-frontend"
     },
     {
       "id": "frontend/src/studio/spectrum.js",
-      "group": "active-frontend"
+      "group": "previous-frontend"
     },
     {
       "id": "frontend/src/studio/studio.css",
@@ -257,6 +301,10 @@
       "group": "endpoint"
     },
     {
+      "id": "DELETE /projects/:id",
+      "group": "endpoint"
+    },
+    {
       "id": "POST /versions",
       "group": "endpoint"
     },
@@ -294,6 +342,16 @@
     }
   ],
   "edges": [
+    {
+      "from": "frontend/scripts/benchmarkHighlights.mjs",
+      "to": "frontend/src/studio/signalProfile.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/scripts/benchmarkTempoKey.mjs",
+      "to": "frontend/src/studio/musicFeatures.js",
+      "relation": "imports"
+    },
     {
       "from": "frontend/src/App.jsx",
       "to": "frontend/src/components/Recorder.jsx",
@@ -455,13 +513,23 @@
       "relation": "imports"
     },
     {
-      "from": "frontend/src/studio/audio.js",
-      "to": "frontend/src/studio/song.js",
+      "from": "frontend/src/studio/analysis.worker.js",
+      "to": "frontend/src/studio/musicFeatures.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/analysis.worker.js",
+      "to": "frontend/src/studio/signalProfile.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/analysis.worker.js",
+      "to": "frontend/src/studio/spectrum.js",
       "relation": "imports"
     },
     {
       "from": "frontend/src/studio/audio.js",
-      "to": "frontend/src/studio/spectrum.js",
+      "to": "frontend/src/studio/song.js",
       "relation": "imports"
     },
     {
@@ -510,6 +578,21 @@
       "relation": "imports"
     },
     {
+      "from": "frontend/src/studio/Dashboard.jsx",
+      "to": "frontend/src/studio/library.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Dashboard.jsx",
+      "to": "frontend/src/studio/projectCover.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Dashboard.jsx",
+      "to": "frontend/src/lib/api.js",
+      "relation": "imports"
+    },
+    {
       "from": "frontend/src/studio/Feed.jsx",
       "to": "frontend/src/studio/Avatar.jsx",
       "relation": "imports"
@@ -522,11 +605,6 @@
     {
       "from": "frontend/src/studio/Home.jsx",
       "to": "frontend/src/studio/ListeningDesk.jsx",
-      "relation": "imports"
-    },
-    {
-      "from": "frontend/src/studio/library.js",
-      "to": "frontend/src/studio/song.js",
       "relation": "imports"
     },
     {
@@ -635,6 +713,21 @@
       "relation": "imports"
     },
     {
+      "from": "frontend/src/__tests__/musicFeatures.test.js",
+      "to": "frontend/src/studio/musicFeatures.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/__tests__/signalProfile.test.js",
+      "to": "frontend/src/studio/signalProfile.js",
+      "relation": "imports"
+    },
+    {
+      "from": "backend/middleware/authMiddleware.js",
+      "to": "backend/jwtSecret.js",
+      "relation": "imports"
+    },
+    {
       "from": "backend/server.js",
       "to": "backend/db.js",
       "relation": "imports"
@@ -647,6 +740,11 @@
     {
       "from": "backend/server.js",
       "to": "backend/middleware/authMiddleware.js",
+      "relation": "imports"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "backend/jwtSecret.js",
       "relation": "imports"
     },
     {
@@ -692,6 +790,11 @@
     {
       "from": "backend/server.js",
       "to": "GET /my-projects",
+      "relation": "serves"
+    },
+    {
+      "from": "backend/server.js",
+      "to": "DELETE /projects/:id",
       "relation": "serves"
     },
     {

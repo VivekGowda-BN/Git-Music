@@ -66,22 +66,14 @@ html { scroll-padding-top:86px }
 .footer-grid nav a:hover {color:#ffd2b4}
 .social-icons {display:grid;grid-template-columns:repeat(3,36px);gap:7px}.social-icons a {width:36px;height:36px;border-color:#536b59;border-radius:9px;color:#e9e3d4}.social-icons a:hover {background:#2f4a3a;border-color:#7e987f;color:#ffcaac;transform:translateY(-2px)}
 .foot-base {color:#b9c6b8;border-color:#405a4a;font:11px var(--mono);margin-top:34px}
-/* Project library. Each jacket has its own block-print motif. */
+/* Project library */
 .shelf-tools {display:flex;align-items:center;justify-content:space-between;gap:12px;border-block:1px solid var(--line);padding:15px 0;margin:3px 0 22px}
 label.search-projects {display:flex;flex-direction:row;align-items:center;gap:9px;border:1px solid var(--line);border-radius:5px;background:#fffef9;padding:0 12px;width:min(390px,75%);color:#747c70}
 .search-projects input[type=search] {border:none;background:transparent;padding:9px 0;min-height:42px}
 .project-cards {grid-template-columns:repeat(3,minmax(0,1fr));gap:19px}
 .sleeve-card {padding:0;display:block;overflow:hidden;border-radius:8px}
-.sleeve-art {height:clamp(114px,10vw,158px);position:relative;overflow:hidden;isolation:isolate;background:var(--jacket);color:var(--print)}
-.ink-0 {--jacket:#c3ceb5;--print:#3c5541}.ink-1 {--jacket:#dfb999;--print:#80492f}.ink-2 {--jacket:#adc6c6;--print:#335d60}
-.sleeve-art i,.sleeve-art b {position:absolute;display:block}
-.sleeve-art i {width:77%;height:210%;right:-10%;top:-65%;border-radius:50%;background:repeating-radial-gradient(circle at 50% 50%,var(--print) 0 3px,transparent 3.5px 8px)}
-.ink-1 i {border-radius:0;transform:rotate(32deg);background:repeating-linear-gradient(90deg,var(--print) 0 5px,transparent 5px 12px)}
-.ink-2 i {border-radius:0;background:repeating-radial-gradient(ellipse at 100% 50%,transparent 0 7px,var(--print) 7.5px 10px);transform:skewX(-12deg)}
-.sleeve-art b {inset:0;background-image:radial-gradient(var(--print) .65px,transparent 1px);background-size:4px 4px;opacity:.17}
-.sleeve-art small {position:absolute;top:13px;left:16px;font:10px var(--mono);letter-spacing:.08em}
-.sleeve-art svg {position:absolute;left:16px;bottom:15px;width:32px;height:32px;stroke-width:1.2}
-.sleeve-body {padding:17px 18px}.sleeve-body h3 {margin:7px 0 17px;font-size:28px}.sleeve-body small {color:var(--mute);font-size:9px}
+.sleeve-art {display:block;width:100%;height:clamp(140px,13vw,200px);object-fit:cover;background:#e6e5dc}
+.sleeve-body {padding:17px 18px}.sleeve-body h3 {margin:7px 0 17px;font-size:28px}.sleeve-body .micro {color:var(--mute);font-size:11px}
 .profile-cards {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
 .portfolio-projects .library-heading {margin:0 0 13px}.profile-cards .portfolio-row {display:grid;gap:15px}.profile-cards .actions {gap:7px}.profile-cards .btn {font-size:12px;min-height:36px;padding:0 11px}
 .btn.solo-button {background:#aa4129;border-color:#903b26;border-radius:99px;box-shadow:0 4px 9px #873d2429;color:#fffaf0;padding:6px 19px 6px 7px;gap:9px}

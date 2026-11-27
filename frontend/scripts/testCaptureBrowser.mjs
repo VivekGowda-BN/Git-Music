@@ -60,7 +60,7 @@ async function inspect(page, sourceDuration) {
   const values = await readings(page);
   const bpm = values.Tempo === 'Unclear' ? null : Number(/^(\d+) BPM$/.exec(values.Tempo)?.[1]);
   if (bpm !== null) range(bpm, 38, 245, 'tempo');
-  assert.match(values['Musical key'], /^(Unclear|[A-G][♭♯b#]? (major|minor))$/);
+  assert.match(values['Musical key'], /^(Unclear|[A-G][♭♯b#]? (major|minor)( \(est\.\))?)$/);
   const span = /^([\d.]+) (k?Hz) – ([\d.]+) (k?Hz)$/.exec(values['Frequency span']);
   assert.ok(span, `frequency span: ${values['Frequency span']}`);
   const hz = (v,unit) => Number(v)*(unit === 'kHz' ? 1000 : 1);
@@ -202,11 +202,31 @@ try {
       console.error(`FAIL ${name}\n${error.stack}${errors.length ? '\nPage errors: '+errors.join('; ') : ''}`);
     } finally { await context.close(); }
   }
+  await run('analysis guide spans both panels and reflows on smaller screens', async page => {
+    await openCapture(page);
+    for (const [width, columns] of [[1440,6],[768,3],[360,2]]) {
+      await page.setViewportSize({width,height:900});
+      const layout = await page.locator('.feature-guide').evaluate(guide => {
+        const terms = [...guide.querySelectorAll('dt')];
+        const panels = document.querySelector('.work-grid').getBoundingClientRect();
+        const bounds = guide.getBoundingClientRect();
+        return {
+          columns: new Set(terms.map(term => term.parentElement.offsetLeft)).size,
+          count: terms.length,
+          aligned: bounds.left === panels.left && bounds.right === panels.right && bounds.top >= panels.bottom,
+        };
+      });
+      assert.deepEqual(layout,{columns,count:6,aligned:true});
+      await fitsViewport(page);
+    }
+  });
   for (const file of songs) {
     await run(`song upload → save → reopen: ${basename(file)}`,async page => {
       const {profile,duration} = await uploadCase(page,file);
-      if (basename(file) === 'the-nights-excerpt.mp3')
+      if (file === songs[0]) {
         near(parseFloat(profile.values.Tempo),124,2,'known song tempo');
+        assert.equal(profile.values['Musical key'],'F♯ major');
+      }
       await saveAndReopen(page,profile,duration,`Browser test ${basename(file).slice(0,80)}`);
       return summary(profile);
     });

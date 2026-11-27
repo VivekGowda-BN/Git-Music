@@ -96,7 +96,12 @@ test('the bundled The Nights excerpt gives a plausible pulse and key', {
   assert.ok(result.bpm != null,JSON.stringify(result));
   assert.ok([0.5,1,2].some(k => Math.abs(result.bpm*k-126) <= 3),JSON.stringify(result));
   assert.ok(result.tempoConfidence >= .2,JSON.stringify(result));
-  assert.ok(result.key != null,JSON.stringify(result));
+  assert.equal(result.key,'F♯ major');
+  // This short mixed passage previously lost its key at the confidence gate.
+  assert.equal(estimateMusic(mono.subarray(28*44100,36*44100),44100).key,'F♯ major');
+  const intro = estimateMusic(mono.subarray(0,8*44100),44100);
+  assert.equal(intro.key,'F♯ major');
+  assert.ok(intro.keyConfidence < .4,'Close tonal fits must remain estimates');
 });
 
 test('finds transposed major and minor keys from harmonic progressions', () => {

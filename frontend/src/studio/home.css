@@ -78,9 +78,7 @@
 
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
   .about-entry:hover {background:#f8f5ec;transform:translateY(-3px)}
-  .sleeve-card .sleeve-art i,.brief .poster {transition:transform .32s ease-out}
-  .sleeve-card:hover .ink-0 i,.sleeve-card:hover .ink-2 i {transform:scale(1.035) translateX(-3px)}
-  .sleeve-card:hover .ink-1 i {transform:rotate(34deg) translateX(-3px)}
+  .brief .poster {transition:transform .32s ease-out}
   .brief:hover .poster {transform:scale(1.018)}.profile-cards article {transition:box-shadow .18s,border-color .18s}.profile-cards article:hover {box-shadow:0 3px 11px #34322a10;border-color:#b4b1ac}
 }
 @media (max-width:900px) {

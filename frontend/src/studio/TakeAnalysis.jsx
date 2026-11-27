@@ -11,7 +11,9 @@ export function AnalysisPanel({meta,clip,status='',name='take',onPreview}){
   const balance=meta?.bandBalance;
   const readings=[
     ['Tempo',meta?.bpm?`${meta.bpm} BPM`:meta?'Unclear':'—'],
-    ['Musical key',meta?.key||(meta?'Unclear':'—')],
+    ['Musical key',meta?.key
+      ? `${meta.key}${Number.isFinite(meta.keyConfidence)&&meta.keyConfidence<.40?' (est.)':''}`
+      : meta?'Unclear':'—'],
     ['Frequency span',meta?.freq_min&&meta?.freq_max?`${hz(meta.freq_min)} – ${hz(meta.freq_max)}`:'—'],
     ['Dynamics',level(meta?.dynamicRangeDb,'dB')],
     ['Average level',level(meta?.rmsDbfs,'dBFS')],

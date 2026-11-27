@@ -39,10 +39,12 @@ dominates its rivals, the panel says **Unclear** rather than inventing a tempo.
 
 The estimator samples up to 120 spectral frames, keeps prominent harmonic
 peaks, discounts upper partials of strong lower notes, and accumulates a chroma
-profile. It correlates that profile against the Krumhansl–Kessler major and
-minor profiles in all 12 transpositions. Confidence requires a good fit, a gap
-over the runner-up, support for the tonic and third, and enough tonal material;
-otherwise the key is **Unclear**.
+profile. It compares that profile with the Temperley major and minor profiles in
+all 12 transpositions. Prominent bass notes give additional weight to the tonic
+and dominant when two keys share similar melodic evidence. If the global result
+is ambiguous, the detector also checks agreement across up to eight sections.
+The panel marks a lower-confidence key as **(est.)** and shows **Unclear**
+when neither the whole take nor its sections support a key.
 
 ## Benchmark data and method
 
@@ -102,14 +104,14 @@ into the headline result.
 | Octave-tolerant tempo | 194/360 (53.9%) |
 | Exact among answered | 122/262 (46.6%) |
 | Octave-tolerant among answered | 194/262 (74.0%) |
-| Key answered | 208/360 (57.8%) |
-| Exact key | 128/360 (35.6%) |
-| Exact key among answered | 128/208 (61.5%) |
+| Key answered, including estimates | 307/360 (85.3%) |
+| Exact key | 186/360 (51.7%) |
+| Exact key among answered | 186/307 (60.6%) |
 
 These are the full 360 recordings, covering comping and solo versions. They show
-the honest limit of the current estimators on solo material: the detector still
-abstains on more than a quarter of takes, and when it answers, octave-tolerant
-tempo agreement is 74.0% and exact key agreement is 61.5%. No claim of 85–95%
+the limits of the estimators on solo material: among answered takes, octave-tolerant
+tempo agreement is 74.0% and exact key agreement is 60.6%. Key profiles were
+compared on these recordings, so this is a development benchmark. No claim of 85–95%
 accuracy is made for this set; it is a stress test, not the produced-song
 target.
 
@@ -119,7 +121,7 @@ The bundled Avicii “The Nights” excerpt is published as 126 BPM and F♯ maj
 The local analysis reports:
 
 - **124 BPM**, confidence 0.96, with 62 / 249 BPM alternatives in the data
-- **F♯ major**, confidence 1.00
+- **F♯ major**, also detected in the 00:28–00:36 passage that previously returned **Unclear**
 - highlight **00:17.0 – 00:32.0** (15 seconds), a recurring passage
 
 The 2 BPM difference is within the benchmark tolerance. The excerpt is chosen

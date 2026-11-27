@@ -69,6 +69,20 @@ try {
   };
 
   try {
+    await page.goto('/dashboard');
+    await page.getByRole('heading',{name:'No recordings yet'}).waitFor();
+    assert.equal(await page.locator('.project-card').count(),0);
+    // Browsers that already stored the three starter projects must also open empty.
+    await page.evaluate(()=>{
+      const projects=['scarborough-fair','tidal-room','after-hours'].map(id=>({
+        id,title:id,demo:true,takes:[{id:'main',part:'guitar',created:'Studio demo'}]
+      }));
+      localStorage.setItem('swarhub:guest',JSON.stringify({projects}));
+    });
+    await page.reload();
+    await page.getByRole('heading',{name:'No recordings yet'}).waitFor();
+    assert.equal(await page.locator('.project-card').count(),0);
+
     // 1. The X in the naming box cancels the take and leaves no project behind.
     await openCapture();
     await upload();
@@ -122,6 +136,11 @@ try {
     await page.getByRole('heading', {name: 'Your projects.'}).waitFor();
     const card = page.getByRole('link').filter({has: page.getByRole('heading', {name: deleteName, exact: true})});
     await card.waitFor();
+    assert.equal(await page.locator('.project-card').count(),1);
+    const storedDate = await page.evaluate(()=>JSON.parse(localStorage.getItem('swarhub:guest')).projects[0].takes[0].created);
+    assert.equal(await card.locator('time').getAttribute('datetime'),storedDate);
+    await card.locator('img').evaluate(image=>image.decode());
+    assert.ok(await card.locator('img').evaluate(image=>image.naturalWidth>0));
     assert.equal(await card.getByRole('button', {name: /delete/i}).count(), 0, 'Card must not expose a delete control');
     assert.equal(await card.locator('.btn.danger').count(), 0, 'Card must not expose a danger action');
     await card.click();
@@ -135,9 +154,33 @@ try {
       'Deleted project must disappear from the dashboard');
     await page.reload();
     await page.getByRole('heading', {name: 'Your projects.'}).waitFor();
+    await page.getByRole('heading',{name:'No recordings yet'}).waitFor();
     assert.equal(await page.getByText(deleteName, {exact: true}).count(), 0,
       'Deleted project must stay deleted after reload');
     console.log('PASS delete from the project detail page');
+
+    await page.evaluate(()=>{
+      const projects=Array.from({length:12},(_,i)=>({
+        id:`photo-${i}`,title:`Session ${i}`,takes:[{id:`take-${i}`,created:'2026-05-01T12:00:00Z'}]
+      }));
+      localStorage.setItem('swarhub:guest',JSON.stringify({projects}));
+    });
+    await page.reload();
+    const photos=page.locator('.sleeve-card img');
+    await photos.first().waitFor();
+    const sources=await photos.evaluateAll(async images=>Promise.all(images.map(async image=>{
+      image.loading='eager';
+      await image.decode();
+      return image.getAttribute('src');
+    })));
+    assert.equal(new Set(sources).size,12);
+    assert.ok(sources.every(src=>/^\/art\/projects\/\d+\.jpg$/.test(src)));
+    await page.getByRole('searchbox').fill('Session 8');
+    assert.equal(await photos.getAttribute('src'),sources[8]);
+    await page.reload();
+    await photos.first().waitFor();
+    assert.deepEqual(await photos.evaluateAll(images=>images.map(img=>img.getAttribute('src'))),sources);
+    console.log('PASS 12 distinct Dashboard photos decode and stay stable across search and reload');
 
     assert.deepEqual(errors, [], 'Uncaught page errors');
   } catch (error) {
