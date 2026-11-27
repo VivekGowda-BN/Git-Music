@@ -10,7 +10,7 @@
 | --- | --- |
 | Capture | Record a take with your microphone or import an audio file and listen back to a suggested excerpt. |
 | Dashboard | Explore a project's take history, compare branches, and choose a master mix. |
-| Feed | Browse the sample community feed and follow links to open music calls. |
+| Feed | Browse sample posts and open music calls. Your workspace shows the photo saved in Profile. The red note at the bottom marks the feed as a preview; live community posts are coming soon. |
 | Opportunities | Filter manually curated gigs, jams, band openings, collaborations, and castings. Each card opens the original listing. |
 
 ## Tech stack
@@ -139,9 +139,14 @@ Open **Profile → Edit profile → Choose photo** to pick an image from your co
 
 Google returns to `/auth/callback`, where the Supabase client exchanges the one-time code for a session. A session belongs to one browser tab's storage; signing out removes it locally and leaves other devices signed in.
 
-### Deploying
+### Deploying to Vercel
 
-Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `VITE_GOOGLE_AUTH_ENABLED` in your host's build environment, add the production `/auth/callback` URL to Supabase, and serve the SPA with a fallback to `index.html` so a refresh on `/auth/callback` works. A custom domain for Supabase is recommended before launch so the Google consent screen shows your brand instead of the project ID.
+Production address: [swarhub.vercel.app](https://swarhub.vercel.app).
+
+- Deploy `frontend/` as a Vite application (`npm run build`, output `dist`). For a Git import, select `frontend` as the Root Directory. The optional Express/SQLite server is separate.
+- Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the Vercel **Production** environment before building. Redeploy after changing them.
+- In Supabase **Authentication → URL Configuration**, set the Site URL to `https://swarhub.vercel.app` and allow `https://swarhub.vercel.app/auth/callback` for email confirmation and OAuth.
+- [`frontend/vercel.json`](frontend/vercel.json) serves the app on direct visits to routes such as `/feed` and `/auth/callback`, and sets the production security headers.
 
 ### Existing SQLite accounts
 

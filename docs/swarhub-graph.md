@@ -4,6 +4,8 @@ Start here for the active application. Follow the relevant edge to its source. D
 
 ## Current handoff
 
+- Deployment target: `swarhub.vercel.app`. `frontend/vercel.json` configures Vite, SPA navigation and security headers; `README.md` documents the production Supabase variables and callback allowlist.
+- Feed’s workspace avatar follows the profile photo, including removal. The sample-activity note below the feed uses the studio’s red accent in `community.css`; live community posts are still pending. `frontend/scripts/testProfilePhoto.mjs` verifies both avatar states and the note in Chrome. Frontend lint and production build passed.
 - Logo verification: `node frontend/scripts/testBranding.mjs` passed in Chrome; frontend lint and production build passed.
 - Dashboard starts empty. Saving a recording or upload creates a dated card; discarding does not. `library.js` removes old demo takes while retaining real branches. Delete remains on the project detail page.
 - `Dashboard.jsx` → `projectCovers()` → `frontend/public/art/projects/`: twelve licensed Pexels photos, assigned across the full recorded library before filtering. Use every photo before recycling the set. Opportunities has its own separate images.
@@ -23,6 +25,7 @@ The [machine-readable source graph](swarhub-graph.json) indexes first-party modu
 
 ```mermaid
 flowchart TD
+  vercel["frontend/vercel.json · production routes and headers"] --> entry
   entry["frontend/index.html → src/main.jsx"] --> shell["studio/Studio.jsx · router, session, workspace"]
   entry --> css["studio/studio.css, workspace.css, community.css, home.css, opportunities.css · layout, instrument surfaces, motion"]
   shell --> home["/ and /home · Home.jsx · hero, idea and navigation guide"]
@@ -53,6 +56,7 @@ flowchart TD
   calls --> marks["public/art/platforms · nine local platform marks"]
   artist --> activity["Contributions.jsx · studio activity calendar"]
   artist --> photo["profilePhoto.js · crop, resize and EXIF strip"]
+  feed -->|validate workspace portrait| photo
   capture --> sound
   dashboard --> sound
   capture --> library["library.js · scoped library, demo migration and audio storage"]

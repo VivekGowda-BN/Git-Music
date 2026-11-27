@@ -51,6 +51,13 @@ try {
   assert.match(stored.photo, /^data:image\/jpeg;base64,/);
   assert.ok(stored.photo.length < 400 * 1024, 'Stored photo must stay small');
 
+  const feedLink = page.getByRole('navigation', {name: 'Main navigation'}).getByRole('link', {name: 'Feed', exact: true});
+  await feedLink.click();
+  const feedPhoto = page.locator('.rail-identity img');
+  assert.equal(await feedPhoto.getAttribute('src'), stored.photo, 'Feed must show the saved workspace photo');
+  await page.getByText('The live community feed is coming soon!', {exact: false}).waitFor();
+  await page.locator('.rail-identity').click();
+
   await page.reload();
   await page.locator('.artist-portrait').waitFor();
   assert.match(await page.locator('.artist-portrait').getAttribute('src'), /^data:image\/jpeg;base64,/,
@@ -62,6 +69,8 @@ try {
   await page.getByRole('button', { name: 'Save profile' }).click();
   assert.match(await page.locator('.artist-portrait').getAttribute('src'), /\/art\/artist\.svg$/);
   assert.match(await page.locator('.avatar-link img').getAttribute('src'), /\/art\/artist\.svg$/);
+  await feedLink.click();
+  assert.equal(await feedPhoto.getAttribute('src'), '/art/artist.svg', 'Feed must reflect photo removal');
 
   assert.deepEqual(errors, [], 'Uncaught page errors');
   console.log('PASS profile photo upload, crop, persistence, rejection and removal');

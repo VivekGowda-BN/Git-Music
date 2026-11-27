@@ -3,6 +3,7 @@ import {Link,useOutletContext} from 'react-router-dom';
 import {ArrowRight,ArrowUpRight,BookOpen,GitBranch,Plus,Search,Star} from 'lucide-react';
 import Avatar from './Avatar';
 import {opportunities} from './opportunities';
+import {safePhoto} from './profilePhoto';
 
 const releases=[
   {id:'monsoon',artist:'Isha Rao',project:'Monsoon Letters',circle:true,lane:'Indie folk',time:'35 min ago',stars:42,action:'added a guitar branch',note:'Kept the rain from the room mic. The second guitar now answers the vocal instead of doubling it.',tracks:['Room vocal','Rain guitar','Second verse']},
@@ -20,7 +21,7 @@ export default function Feed(){
   const listed=projects.filter(p=>p.title.toLowerCase().includes(search.trim().toLowerCase())).slice(0,6);
   function openUpdate(e,id){e.preventDefault();setView('Latest');setMobilePane('Activity');requestAnimationFrame(()=>document.getElementById(`feed-${id}`)?.focus());}
   return <section className="work wrap feed-page" data-pane={mobilePane}><nav className="mobile-feed-nav" aria-label="Feed sections">{['Projects','Activity','Updates'].map(p=><button key={p} aria-pressed={mobilePane===p} onClick={()=>setMobilePane(p)}>{p}</button>)}</nav><div className="feed-grid">
-    <aside className="feed-sidebar"><Link className="rail-identity" to="/profile"><img src="/art/artist.svg" alt=""/><span><small>Workspace</small><strong>{artist}</strong></span></Link>
+    <aside className="feed-sidebar"><Link className="rail-identity" to="/profile"><img src={safePhoto(library.artist.photo)||'/art/artist.svg'} alt=""/><span><small>Workspace</small><strong>{artist}</strong></span></Link>
       <div className="rail-heading"><h2>Your projects</h2><Link to="/capture" aria-label="Capture a new project" title="Capture a new project"><Plus size={16}/></Link></div>
       <label className="rail-search"><Search size={15}/><input aria-label="Find a project in your sidebar" placeholder="Find a project…" type="search" value={search} onChange={e=>setSearch(e.target.value)}/></label>
       <div className="rail-projects">{listed.map(p=><Link className="rail-project" key={p.id} to={`/dashboard?project=${p.id}`}><BookOpen size={15}/><strong>{p.title}</strong></Link>)}
@@ -36,5 +37,6 @@ export default function Feed(){
       {opportunities.slice(0,3).map(o=><a className="call-link" key={o.id} href={o.url} target="_blank" rel="noreferrer noopener"><strong>{o.title}</strong><span>{o.city} · {o.source}</span><ArrowUpRight size={15}/></a>)}
       <Link className="rail-more" to="/opportunities">See all {opportunities.length} calls <ArrowRight size={13}/></Link>
     </aside></div>
+    <p className="feed-preview-note">You’re viewing sample activity. The live community feed is coming soon!</p>
   </section>;
 }

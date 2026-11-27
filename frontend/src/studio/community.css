@@ -96,6 +96,7 @@ label.search-projects {display:flex;flex-direction:row;align-items:center;gap:9p
 .visibility legend {font-size:13px;font-weight:600}.visibility label:not(.chip) {display:flex;align-items:center;gap:6px}.visibility input[type=radio] {width:auto;min-height:0;accent-color:var(--green)}.resume-file {margin-top:16px}
 /* The listening feed */
 .feed-page {padding-block:30px 55px;min-height:calc(100svh - 72px)}
+.feed-preview-note {margin:24px 0 0;text-align:center;font-size:13px;color:var(--red)}
 main:has(.feed-page) {background:#f3f3f1}
 .mobile-feed-nav {display:none}
 .feed-grid {display:grid;grid-template-columns:minmax(165px,.84fr) minmax(0,2.48fr) minmax(165px,.92fr);gap:clamp(12px,1.7vw,28px);align-items:start}

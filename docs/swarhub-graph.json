@@ -640,6 +640,11 @@
       "relation": "imports"
     },
     {
+      "from": "frontend/src/studio/Feed.jsx",
+      "to": "frontend/src/studio/profilePhoto.js",
+      "relation": "imports"
+    },
+    {
       "from": "frontend/src/studio/Home.jsx",
       "to": "frontend/src/studio/ListeningDesk.jsx",
       "relation": "imports"
