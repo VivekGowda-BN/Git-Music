@@ -1,33 +1,89 @@
-import {useState} from 'react';
-import {Link,useNavigate} from 'react-router-dom';
+import {useEffect,useState} from 'react';
+import {Link} from 'react-router-dom';
 import {ArrowRight,Eye,EyeOff} from 'lucide-react';
 import axios from 'axios';
 import {API_URL,setAuthSession} from '../lib/api';
+import {callbackUrl,googleEnabled,googleProviderEnabled,legacyAuth,supabase} from '../lib/supabase';
 
-const googleStart=import.meta.env.VITE_GOOGLE_LOGIN_URL;
 const recoveryPage=import.meta.env.VITE_ACCOUNT_RECOVERY_URL;
+const legacyGoogle=legacyAuth && import.meta.env.VITE_GOOGLE_LOGIN_URL;
 
-export default function Auth({signup}){
-  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[help,setHelp]=useState(''),[show,setShow]=useState(false);
-  const navigate=useNavigate();
-  async function submit(e){
-    e.preventDefault();setBusy(true);setError('');const fields=Object.fromEntries(new FormData(e.currentTarget));
+export default function Auth({signup,callbackFailed}){
+  const [busy,setBusy]=useState(false),[show,setShow]=useState(false),[sentTo,setSentTo]=useState(''),[notice,setNotice]=useState('');
+  const [error,setError]=useState(callbackFailed?'Sign-in was not completed. Try logging in again, or open the confirmation link in the browser where you signed up.':'');
+  const [googleReady,setGoogleReady]=useState(googleEnabled);
+  const configured=!!supabase||legacyAuth;
+  useEffect(()=>{
+    if(googleEnabled||legacyGoogle||!supabase)return;
+    let active=true;
+    googleProviderEnabled().then(enabled=>{if(active)setGoogleReady(enabled);});
+    return ()=>{active=false;};
+  },[]);
+
+  async function submit(event){
+    event.preventDefault();
+    const fields=new FormData(event.currentTarget);
+    const email=fields.get('email').trim(),password=fields.get('password');
+    const username=signup?fields.get('username').trim():'';
+    if(signup&&!username){setError('Enter an artist name.');return;}
+    setError('');setBusy(true);
     try{
-      if(signup)await axios.post(`${API_URL}/signup`,fields);
-      const {data}=await axios.post(`${API_URL}/login`,{email:fields.email,password:fields.password});
-      setAuthSession(data.access_token,data.user_id);navigate('/dashboard');
-    }catch(err){setError(err.response?.data?.error||'The account server is unavailable. Please try again later.');}finally{setBusy(false);}
+      if(legacyAuth){
+        if(signup)await axios.post(`${API_URL}/signup`,{email,password,username});
+        const {data}=await axios.post(`${API_URL}/login`,{email,password});
+        setAuthSession(data.access_token,data.user_id);
+      }else if(signup){
+        const {data,error}=await supabase.auth.signUp({
+          email,password,options:{emailRedirectTo:callbackUrl(),data:{artist_name:username}}
+        });
+        if(error)throw error;
+        if(!data.session)setSentTo(email);
+      }else{
+        const {error}=await supabase.auth.signInWithPassword({email,password});
+        if(error)throw error;
+      }
+    }catch(err){
+      setError(err.response?.data?.error||err.message||'The account service is unavailable.');
+    }finally{setBusy(false);}
   }
-  return <section className="access-page"><div className="access-card"><div className="auth-brand"><img src="/art/swarhub-mark.svg" alt=""/> SwarHub</div><h1>{signup?'Create account':'Log in'}</h1><p>{signup?'Make a home for your recordings.':'Welcome back to your studio.'}</p>
-    <form onSubmit={submit} className="stack">{signup&&<label>Artist name<input autoComplete="username" name="username" required/></label>}
-      <label>Email address<input name="email" type="email" autoComplete="email" placeholder="you@example.com" required/></label>
-      <label>Password<span className="password-field"><input name="password" type={show?'text':'password'} autoComplete={signup?'new-password':'current-password'} required/><button type="button" aria-label={show?'Hide password':'Show password'} onClick={()=>setShow(s=>!s)}>{show?<EyeOff size={16}/>:<Eye size={16}/>}</button></span></label>
-      {!signup&&(recoveryPage?<a className="help-link" href={recoveryPage}>Forgot email or password?</a>:<button className="help-link" type="button" aria-expanded={help==='recovery'} onClick={()=>setHelp(v=>v==='recovery'?'':'recovery')}>Forgot email or password?</button>)}
-      {help==='recovery'&&<p className="access-note" role="status">Check your browser’s saved passwords for your SwarHub email and login. Email recovery isn’t connected in this preview.</p>}
-      {error&&<p className="error" role="alert">{error}</p>}<button disabled={busy} className="btn primary">{busy?'Please wait…':signup?'Create account':'Log in'}<ArrowRight size={16}/></button>
-    </form><div className="or"><span/>or<span/></div>
-    <button className="btn google-btn" onClick={()=>{if(googleStart)window.location.assign(googleStart);else setHelp('google');}}><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.7-.4-4H24v7.7h11a9.5 9.5 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.5l-6.6-5.1a12.1 12.1 0 0 1-18-6.3H6.1v5.3A20 20 0 0 0 24 44z"/><path fill="#FBBC05" d="M12.9 28.1a12 12 0 0 1 0-8.2v-5.3H6.1a20 20 0 0 0 0 18.8z"/><path fill="#EA4335" d="M24 11.9c3 0 5.6 1 7.7 3l5.7-5.6A19.3 19.3 0 0 0 24 4 20 20 0 0 0 6.1 14.6l6.8 5.3a11.8 11.8 0 0 1 11.1-8z"/></svg>Continue with Google</button>
-    {help==='google'&&<p className="access-note" role="status">Google sign-in isn’t connected in this preview. Use email and password above.</p>}
-    <p className="access-switch">{signup?'Already have an account?':'New to SwarHub?'} <Link to={signup?'/login':'/signup'}>{signup?'Log in':'Create an account'}</Link></p>
+
+  async function resend(){
+    setBusy(true);setError('');setNotice('');
+    try{
+      const {error}=await supabase.auth.resend({type:'signup',email:sentTo,options:{emailRedirectTo:callbackUrl()}});
+      if(error)throw error;
+      setNotice('A new confirmation email is on its way.');
+    }catch(err){setError(err.message||'Could not resend the email. Try again later.');}
+    finally{setBusy(false);}
+  }
+
+  async function google(){
+    if(legacyGoogle){window.location.assign(legacyGoogle);return;}
+    setBusy(true);setError('');
+    try{
+      const {error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:callbackUrl()}});
+      if(error)throw error;
+    }catch(err){setError(err.message||'Google sign-in is unavailable.');setBusy(false);}
+  }
+
+  return <section className="access-page"><div className="access-card">
+    <div className="auth-brand"><img src="/art/swarhub-mark.svg" alt=""/> SwarHub</div>
+    {sentTo?<><h1>Check your email</h1><p role="status">Open the confirmation link sent to <strong>{sentTo}</strong> in this browser to finish creating your account.</p>
+      {notice&&<p className="access-note" role="status">{notice}</p>}
+      {error&&<p className="error" role="alert">{error}</p>}
+      <div className="actions"><button className="btn" disabled={busy} onClick={resend}>{busy?'Please wait…':'Resend confirmation email'}</button><Link className="btn" to="/login">Back to log in</Link></div></>:<>
+      <h1>{signup?'Create account':'Log in'}</h1><p>{signup?'Make a home for your recordings.':'Welcome back to your studio.'}</p>
+      {!configured&&<p className="access-note" role="status">Account access is not configured on this site yet. You can still <Link to="/capture">use Capture as a guest</Link>.</p>}
+      <form onSubmit={submit} className="stack">
+        {signup&&<label>Artist name<input autoComplete="nickname" name="username" maxLength={80} required/></label>}
+        <label>Email address<input name="email" type="email" autoComplete="email" placeholder="you@example.com" required/></label>
+        <label>Password<span className="password-field"><input name="password" type={show?'text':'password'} autoComplete={signup?'new-password':'current-password'} minLength={signup&&!legacyAuth?8:undefined} placeholder={signup&&!legacyAuth?'At least 8 characters':undefined} required/><button type="button" aria-label={show?'Hide password':'Show password'} onClick={()=>setShow(s=>!s)}>{show?<EyeOff size={16}/>:<Eye size={16}/>}</button></span></label>
+        {!signup&&recoveryPage&&<a className="help-link" href={recoveryPage}>Forgot email or password?</a>}
+        {error&&<p className="error" role="alert">{error}</p>}
+        <button disabled={busy||!configured} className="btn primary">{busy?'Please wait…':signup?'Create account':'Log in'}<ArrowRight size={16}/></button>
+      </form>
+      {(googleReady||legacyGoogle)&&<><div className="or"><span/>or<span/></div><button disabled={busy} className="btn google-btn" onClick={google}>Continue with Google</button></>}
+      <p className="access-switch">{signup?'Already have an account?':'New to SwarHub?'} <Link to={signup?'/login':'/signup'}>{signup?'Log in':'Create an account'}</Link></p>
+    </>}
   </div></section>;
 }

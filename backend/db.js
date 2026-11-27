@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const dbPath = path.join(__dirname, 'database.sqlite');
+const dbPath = process.env.SQLITE_PATH || path.join(__dirname, 'database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Error opening database', err.message);
@@ -27,6 +27,7 @@ db.serialize(() => {
       description TEXT,
       name TEXT,
       message TEXT,
+      user_id INTEGER,
       FOREIGN KEY(parent_id) REFERENCES recordings(id)
     )
   `);
@@ -93,6 +94,11 @@ db.serialize(() => {
   // Ensure older versions of recordings table are updated
   db.run(`ALTER TABLE recordings ADD COLUMN name TEXT`, (err) => { /* ignore if already exists */ });
   db.run(`ALTER TABLE recordings ADD COLUMN message TEXT`, (err) => { /* ignore if already exists */ });
+  // Ownership was added after the first recordings existed. Rows created before
+  // this column have no owner and are no longer served by the authenticated API.
+  db.run(`ALTER TABLE recordings ADD COLUMN user_id INTEGER`, (err) => { /* ignore if already exists */ });
+  db.run(`CREATE INDEX IF NOT EXISTS idx_recordings_user ON recordings(user_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id)`);
 });
 
 module.exports = db;

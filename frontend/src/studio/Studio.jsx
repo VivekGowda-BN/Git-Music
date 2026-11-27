@@ -7,11 +7,13 @@ import Home from './Home';
 import Capture from './Capture';
 import Dashboard from './Dashboard';
 import {Opportunities,Profile} from './Portfolio';
-import {loadLibrary} from './library';
+import {claimGuestLibrary,loadLibrary} from './library';
 import {API_URL,getAuthHeaders,getAuthToken,getAuthUserId,clearAuthSession,fetchCurrentUser} from '../lib/api';
 import Feed from './Feed';
 import Auth from './Auth';
 import {featured} from './featured';
+import {legacyAuth,supabase} from '../lib/supabase';
+import {safePhoto} from './profilePhoto';
 
 const links=[['Feed','/feed'],['Dashboard','/dashboard'],['Capture','/capture'],['Opportunities','/opportunities']];
 const footerLinks=[['Home','/home'],...links,['Profile','/profile']];
@@ -36,36 +38,64 @@ function Footer(){
       <a href={import.meta.env.VITE_INSTAGRAM_URL||'https://www.instagram.com/avicii/'} target="_blank" rel="noreferrer" aria-label={import.meta.env.VITE_INSTAGRAM_URL?'Instagram':'Featured artist on Instagram'} title="Instagram"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.4" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg></a>
     </div></div></div><div className="wrap foot-base"><span>© {new Date().getFullYear()} SwarHub</span><a href="#main" onClick={e=>{e.preventDefault();window.scrollTo(0,0);document.getElementById('main')?.focus({preventScroll:true});}}>Back to top ↑</a></div></footer>;
 }
-function Shell({scope}){
-  const [library,setLibrary]=useState(()=>loadLibrary(scope)),[remote,setRemote]=useState([]),[user,setUser]=useState(null),[accountError,setAccountError]=useState(''),[storageError,setStorageError]=useState(''),[menu,setMenu]=useState(false);
+function Shell({scope,identity}){
+  const [library,setLibrary]=useState(()=>loadLibrary(scope)),[remote,setRemote]=useState([]),[legacyUser,setLegacyUser]=useState(null),[accountError,setAccountError]=useState(''),[storageError,setStorageError]=useState(''),[menu,setMenu]=useState(false);
+  const user=identity?{id:identity.id,email:identity.email,username:identity.user_metadata?.artist_name||identity.user_metadata?.full_name||identity.email?.split('@')[0]}:legacyUser;
   const {pathname}=useLocation(),navigate=useNavigate(),home=['/','/home'].includes(pathname);
-  const [preview,setPreview]=useState(()=>sessionStorage.getItem('swarhub-preview')!=='off'),reduced=useReducedMotion();
+  const [preview,setPreview]=useState(()=>sessionStorage.getItem('swarhub-preview')==='on'),reduced=useReducedMotion();
+  const [notice,setNotice]=useState(()=>{const text=sessionStorage.getItem('swarhub-notice');if(text)sessionStorage.removeItem('swarhub-notice');return text||'';});
   const signedIn=scope!=='guest',artistView=signedIn||preview;
   const openPreview=useCallback(()=>{if(!signedIn){sessionStorage.setItem('swarhub-preview','on');setPreview(true);}},[signedIn]);
-  function signOut(){sessionStorage.setItem('swarhub-preview','off');setPreview(false);setMenu(false);if(signedIn)clearAuthSession();navigate('/home');}
+  async function signOut(){
+    sessionStorage.setItem('swarhub-preview','off');setPreview(false);setMenu(false);
+    if(identity){
+      const {error}=await supabase.auth.signOut({scope:'local'});
+      if(error){setAccountError('Could not sign out. Please try again.');return;}
+    }else if(signedIn)clearAuthSession();
+    navigate('/home');
+  }
   useEffect(()=>{document.title=`${home?'The musician’s workspace':pathname==='/profile'?'Artist profile':footerLinks.find(([,v])=>v===pathname)?.[0]||'Artist access'} — SwarHub`;window.scrollTo(0,0);},[pathname,home]);
   useEffect(()=>{
-    if(!getAuthToken())return;
+    if(!legacyAuth||!getAuthToken())return;
     let active=true;const options={headers:getAuthHeaders()};
     (async()=>{
       try{
         const [who,{data:projects}]=await Promise.all([fetchCurrentUser(),axios.get(`${API_URL}/my-projects`,options)]);
         const repos=await Promise.all(projects.map(async p=>{const {data}=await axios.get(`${API_URL}/projects/${p.id}/versions`,options);
           return {...p,serverId:p.id,id:`account-${p.id}`,remote:true,takes:data.reverse().map(v=>({...v,id:`version-${v.id}`,name:v.instruments||`Take ${v.id}`,created:v.created_at,parent:null}))};}));
-        if(active){setUser(who);setRemote(repos);}
+        if(active){setLegacyUser(who);setRemote(repos);}
       }catch{if(active)setAccountError('Account repositories could not be loaded. Your local workspace is available.');}
     })();return()=>{active=false;};
   },[scope]);
   function update(fn){const next=fn(library);try{localStorage.setItem(`swarhub:${scope}`,JSON.stringify(next));setLibrary(next);setStorageError('');}catch{setStorageError('Browser storage is full or unavailable. Your changes could not be saved.');throw Error('Storage unavailable');}}
   function removeRemote(id){setRemote(list=>list.filter(p=>p.id!==id));}
   return <><a className="skip" href="#main">Skip to content</a><header className="top glass-nav" onKeyDown={e=>{if(e.key==='Escape')setMenu(false);}}><div className="nav-wrap wrap" onClick={e=>{if(e.target.closest('a'))setMenu(false);}}><Brand/><nav id="main-navigation" aria-label="Main navigation" className={menu?'open':''}>{links.map(([name,path])=><NavLink className={({isActive})=>isActive?'active':''} key={path} to={path}>{({isActive})=><>{isActive&&<motion.i aria-hidden="true" className="nav-highlight" layoutId="nav-active" transition={{duration:reduced?0:.22}}/>}<span>{name}</span></>}</NavLink>)}</nav>
-    <div className="account-nav">{artistView?<><Link to="/profile" className="avatar-link" aria-label={`Open ${library.artist.name||user?.username||'artist'} profile`} title="Artist profile" aria-current={pathname==='/profile'?'page':undefined}><img src="/art/artist.svg" alt=""/></Link><button className="login-link" onClick={signOut} aria-label="Sign out"><LogOut size={14}/><span>Sign out</span></button></>:<><Link className="text-login" to="/login">Log in</Link><Link className="login-link" to="/signup">Sign up <ArrowUpRight size={14}/></Link></>}</div>
+    <div className="account-nav">{artistView?<><Link to="/profile" className="avatar-link" aria-label={`Open ${library.artist.name||user?.username||'artist'} profile`} title="Artist profile" aria-current={pathname==='/profile'?'page':undefined}><img src={safePhoto(library.artist.photo)||'/art/artist.svg'} alt=""/></Link><button className="login-link" onClick={signOut} aria-label="Sign out"><LogOut size={14}/><span>Sign out</span></button></>:<><Link className="text-login" to="/login">Log in</Link><Link className="login-link" to="/signup">Sign up <ArrowUpRight size={14}/></Link></>}</div>
     <button className="menu-toggle" aria-controls="main-navigation" aria-expanded={menu} aria-label={menu?'Close navigation':'Open navigation'} onClick={()=>setMenu(v=>!v)}>{menu?<X/>:<Menu/>}</button></div></header>
-    <main id="main" tabIndex="-1">{storageError&&<p className="wrap error" role="alert">{storageError}</p>}<Outlet context={{library,update,remote,removeRemote,user,accountError,previewArtist:!signedIn&&preview,openPreview}}/></main><Footer/></>;
+    <main id="main" tabIndex="-1">{notice&&<p className="wrap notice" role="status">{notice}<button aria-label="Dismiss message" onClick={()=>setNotice('')}>×</button></p>}{storageError&&<p className="wrap error" role="alert">{storageError}</p>}{identity&&accountError&&<p className="wrap error" role="alert">{accountError}</p>}<Outlet context={{library,update,remote,removeRemote,user,accountError:legacyAuth?accountError:'',previewArtist:!signedIn&&preview,openPreview}}/></main><Footer/></>;
 }
+const legacyScope=()=>legacyAuth&&getAuthToken()?`artist-${getAuthUserId()||'local'}`:'guest';
+
 export default function Studio(){
-  const session=()=>getAuthToken()?`artist-${getAuthUserId()||'local'}`:'guest';
-  const [scope,setScope]=useState(session);
-  useEffect(()=>{const sync=()=>setScope(session());window.addEventListener('swarlab-auth',sync);window.addEventListener('storage',sync);return()=>{window.removeEventListener('swarlab-auth',sync);window.removeEventListener('storage',sync);};},[]);
-  return <BrowserRouter><Routes><Route element={<Shell key={scope} scope={scope}/>}><Route index element={<Home/>}/><Route path="home" element={<Home/>}/><Route path="feed" element={<Feed/>}/><Route path="capture" element={<Capture/>}/><Route path="dashboard" element={<Dashboard/>}/><Route path="opportunities" element={<Opportunities/>}/><Route path="profile" element={<Profile/>}/><Route path="preview/profile" element={<PreviewProfile/>}/><Route path="login" element={<Auth key="login"/>}/><Route path="signup" element={<Auth key="signup" signup/>}/><Route path="analyse" element={<Navigate replace to="/capture"/>}/><Route path="compare" element={<Navigate replace to="/dashboard"/>}/><Route path="*" element={<Navigate replace to="/home"/>}/></Route></Routes></BrowserRouter>;
+  const [identity,setIdentity]=useState(null),[ready,setReady]=useState(!supabase);
+  const [oldScope,setOldScope]=useState(legacyScope);
+  useEffect(()=>{
+    if(supabase){
+      const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{
+        const user=session?.user??null;
+        if(user&&claimGuestLibrary(user.id))sessionStorage.setItem('swarhub-notice','Your guest recordings were added to this account.');
+        setIdentity(user);setReady(true);
+      });
+      return ()=>subscription.unsubscribe();
+    }
+    if(!legacyAuth)return;
+    const sync=()=>setOldScope(legacyScope());
+    window.addEventListener('swarlab-auth',sync);window.addEventListener('storage',sync);
+    return ()=>{window.removeEventListener('swarlab-auth',sync);window.removeEventListener('storage',sync);};
+  },[]);
+  if(!ready)return <p className="wrap" role="status">Opening your workspace…</p>;
+  const scope=identity?`supabase-${identity.id}`:oldScope;
+  const signedIn=scope!=='guest';
+  const dashboard=<Navigate replace to="/dashboard"/>;
+  return <BrowserRouter><Routes><Route element={<Shell key={scope} scope={scope} identity={identity}/>}><Route index element={<Home/>}/><Route path="home" element={<Home/>}/><Route path="feed" element={<Feed/>}/><Route path="capture" element={<Capture/>}/><Route path="dashboard" element={<Dashboard/>}/><Route path="opportunities" element={<Opportunities/>}/><Route path="profile" element={<Profile/>}/><Route path="preview/profile" element={<PreviewProfile/>}/><Route path="login" element={signedIn?dashboard:<Auth key="login"/>}/><Route path="signup" element={signedIn?dashboard:<Auth key="signup" signup/>}/><Route path="auth/callback" element={identity?dashboard:<Auth key="callback" callbackFailed/>}/><Route path="analyse" element={<Navigate replace to="/capture"/>}/><Route path="compare" element={<Navigate replace to="/dashboard"/>}/><Route path="*" element={<Navigate replace to="/home"/>}/></Route></Routes></BrowserRouter>;
 }

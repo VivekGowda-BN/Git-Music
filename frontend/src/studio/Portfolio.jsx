@@ -6,6 +6,7 @@ import {Topology} from './Dashboard';
 import {audioSource} from './playback';
 import Contributions from './Contributions';
 import {opportunities,opportunityTypes,platformIcons,sources} from './opportunities';
+import {prepareProfilePhoto,safePhoto} from './profilePhoto';
 
 function ListeningRoom({project}){
   const [id,setId]=useState(project.takes[0]?.id),[src,setSrc]=useState(''),[error,setError]=useState('');
@@ -82,7 +83,27 @@ function external(value){
 const socialFields=[['website','Artist website'],['soundcloud','SoundCloud'],['instagram','Instagram']];
 function Editor({artist,projects,save,close}){
   const [draft,setDraft]=useState(artist),[visible,setVisible]=useState(projects.filter(p=>p.is_public).map(p=>p.id));
+  const [photoError,setPhotoError]=useState(''),[photoBusy,setPhotoBusy]=useState(false);
+  async function choosePhoto(event){
+    const file=event.target.files?.[0];
+    event.target.value='';
+    if(!file)return;
+    setPhotoBusy(true);setPhotoError('');
+    try{const photo=await prepareProfilePhoto(file);setDraft(v=>({...v,photo}));}
+    catch(error){setPhotoError(error.message||'Could not use that photo.');}
+    finally{setPhotoBusy(false);}
+  }
   return <form className="panel inset stack" onSubmit={e=>{e.preventDefault();save(draft,visible);}}><h2>Edit profile</h2>
+    <div className="portrait-edit">
+      <img src={safePhoto(draft.photo)||'/art/artist.svg'} alt="Profile photo preview"/>
+      <div className="portrait-actions">
+        <label className="btn">Choose photo<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif" onChange={choosePhoto} disabled={photoBusy}/></label>
+        {draft.photo&&<button className="btn" type="button" onClick={()=>setDraft(v=>({...v,photo:''}))}>Remove photo</button>}
+        <small>Square crop, resized in this browser. Location data is removed.</small>
+        {photoBusy&&<small role="status">Preparing photo…</small>}
+        {photoError&&<p role="alert" className="error">{photoError}</p>}
+      </div>
+    </div>
     {[['name','Artist name'],['bio','Bio'],['gear','Instruments & gear (comma-separated)'],...socialFields].map(([k,label])=><label key={k}>{label}<input value={draft[k]||''} type={socialFields.some(([key])=>key===k)?'url':'text'} maxLength={400} onChange={e=>setDraft(v=>({...v,[k]:e.target.value}))}/></label>)}
     <fieldset><legend>Feature these projects</legend>{projects.map(p=><label key={p.id} className="chip"><input type="checkbox" checked={visible.includes(p.id)} onChange={()=>setVisible(v=>v.includes(p.id)?v.filter(id=>id!==p.id):[...v,p.id])}/>{p.title}</label>)}</fieldset>
     <div className="actions"><button className="btn primary">Save profile</button><button className="btn" type="button" onClick={close}>Cancel</button></div></form>;
@@ -96,7 +117,7 @@ export function Profile(){
     const id=crypto.randomUUID();update(l=>({...l,projects:[{...project,id,demo:false,remote:false,title:`${project.title} · fork`,is_public:false},...l.projects]}));navigate(`/dashboard?project=${id}`);
   }
   return <section className="work wrap artist-layout"><aside className="artist-sidebar">
-    <img className="artist-portrait" src="/art/artist.svg" alt="Illustrated portrait of a musician wearing headphones"/>
+    <img className="artist-portrait" src={safePhoto(artist.photo)||'/art/artist.svg'} alt={artist.photo?`${name} profile photo`:'Illustrated portrait of a musician wearing headphones'}/>
     {previewArtist&&<small className="profile-badge">Preview artist</small>}<h1>{name}</h1><div className="handle">@{(user?.username||name).toLowerCase().replace(/[^\p{L}\d]+/gu,'-').replace(/-$/,'')}</div>
     <p>{artist.bio||(previewArtist?'Folk melodies, fingerpicked guitar, and field recordings. Usually chasing a better second verse.':'Add a bio to introduce your instruments and recording practice.')}</p>
     <div className="follow-count"><Users size={15}/><b>{previewArtist?'128':'0'}</b> followers <i>·</i> <b>{previewArtist?'32':'0'}</b> following</div>

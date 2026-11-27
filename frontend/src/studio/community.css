@@ -141,6 +141,16 @@ main:has(.feed-page) {background:#f3f3f1}
 .help-link {font-size:12px;font-weight:600;color:var(--rust);width:fit-content;padding:0;min-height:24px}
 .or {display:flex;align-items:center;gap:10px;margin:16px 0;font-size:12px;color:var(--mute)}.or span {flex:1;border-top:1px solid var(--line)}
 .access-switch,.access-note {font-size:13px;margin:15px 0 0}.access-switch a {color:var(--rust);text-decoration:underline}.access-note {background:#edf0e5;padding:10px;border-radius:4px}
+.access-card .actions {display:grid;gap:9px;margin-top:18px}
+main>.notice {margin-top:18px;padding:11px 14px;border:1px solid #b8bfaf;border-radius:6px;background:#edf0e5;color:#3d4a37;font-size:13px}
+.notice button {margin-left:auto;font-size:19px;line-height:1;padding:0 4px}
+.portrait-edit {display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:start;padding:12px 0 4px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.portrait-edit img {width:96px;height:96px;border-radius:50%;object-fit:cover;border:1px solid #b8bfaf;background:#e9ede2}
+.portrait-actions {display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.portrait-actions .btn {width:auto;position:relative;overflow:hidden}
+.portrait-actions .btn input[type=file] {position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.portrait-actions small {flex-basis:100%;font-size:12px;color:var(--mute)}
+.portrait-actions .error {flex-basis:100%;margin:0;font-size:12px}
 @media (max-width:1040px){.glass-nav nav {gap:0}.glass-nav nav a {padding-inline:9px;font-size:13px}.glass-nav .nav-wrap {gap:18px}.feed-sidebar,.feed-updates {padding:13px}.profile-cards {gap:8px}.sleeve-body {padding:14px}}
 @media (max-width:800px){.glass-nav .nav-wrap {min-height:56px;gap:8px}.glass-nav .avatar-link {width:32px;height:32px}.glass-nav .avatar-link img {width:26px;height:26px}.glass-nav nav.open {display:grid;gap:4px;top:calc(100% + 8px);background:rgba(30,47,38,.98);padding:10px;border:1px solid rgba(245,240,228,.17);border-radius:15px;box-shadow:0 22px 36px -22px #0b1410cc;backdrop-filter:blur(24px)}.glass-nav nav.open a,.glass-nav nav.open a.active {justify-content:flex-start;padding:12px 14px;border-radius:9px;font-size:14px}.glass-nav nav.open a.active {background:#a64027;color:#fff8ec}.glass-nav nav.open a:hover {background:rgba(255,255,255,.1);transform:none}.glass-nav .nav-highlight {display:none}.profile-cards {grid-template-columns:1fr}.project-cards {grid-template-columns:repeat(2,minmax(0,1fr))}.footer-grid {grid-template-columns:1.15fr 1fr;gap:22px}.footer-grid>div:last-child {grid-column:1/-1}}
 @media (max-width:750px){.feed-grid {display:block}.feed-page {padding-top:17px}.mobile-feed-nav {display:flex;gap:3px;margin-bottom:20px;padding:3px;border:1px solid #d2d1cb;background:#e9e8e4;border-radius:6px}.mobile-feed-nav button {flex:1;padding:8px;border-radius:4px;font-size:13px}.mobile-feed-nav button[aria-pressed=true] {background:#fffef9;box-shadow:0 1px 3px #0002}.feed-page:not([data-pane=Activity]) .feed-center,.feed-page:not([data-pane=Projects]) .feed-sidebar,.feed-page:not([data-pane=Updates]) .feed-updates {display:none}.feed-sidebar,.feed-updates {position:static}.footer-grid {grid-template-columns:1.15fr 1fr}.footer-signature {grid-column:1/-1}}

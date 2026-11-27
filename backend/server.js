@@ -9,12 +9,52 @@ const db = require('./db');
 const { hashPassword, comparePassword } = require('./utils/auth');
 const jwt = require('jsonwebtoken');
 const authenticateUser = require('./middleware/authMiddleware');
+const { rateLimit } = require('./middleware/rateLimit');
 
 const JWT_SECRET = require('./jwtSecret');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.disable('x-powered-by');
+// Only enable when the API actually sits behind a trusted reverse proxy, so
+// rate limiting can use the forwarded client address without letting clients
+// spoof it.
+if (process.env.TRUST_PROXY === '1') app.set('trust proxy', 1);
+
+// Only the studio origins may call the API from a browser. Requests without an
+// Origin header (server-to-server, curl) are still allowed.
+const allowedOrigins = (process.env.CORS_ORIGINS ||
+  'http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173')
+  .split(',').map((value) => value.trim()).filter(Boolean);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 600
+}));
+app.use(express.json({ limit: '1mb' }));
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()');
+  next();
+});
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 200;
+
+function text(value, max) {
+  return typeof value === 'string' ? value.trim().slice(0, max) : '';
+}
+
+const loginLimiter = rateLimit({ max: Number(process.env.RATE_LIMIT_MAX) || 20 });
+const signupLimiter = rateLimit({ max: Number(process.env.RATE_LIMIT_SIGNUP_MAX) || 10 });
+
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -35,12 +75,23 @@ app.get('/health', (req, res) => {
 });
 
 // Authentication Routes
-app.post('/signup', async (req, res) => {
-  const { username, email, password } = req.body;
+app.post('/signup', signupLimiter, async (req, res) => {
+  const username = text(req.body?.username, 80);
+  const email = text(req.body?.email, 254).toLowerCase();
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
   // 1. Validate input
   if (!username || !email || !password) {
     return res.status(400).json({ error: 'All fields are required' });
+  }
+  if (username.length < 2) {
+    return res.status(400).json({ error: 'Username must be at least 2 characters' });
+  }
+  if (!EMAIL_PATTERN.test(email)) {
+    return res.status(400).json({ error: 'Enter a valid email address' });
+  }
+  if (password.length < MIN_PASSWORD_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
+    return res.status(400).json({ error: `Password must be ${MIN_PASSWORD_LENGTH}–${MAX_PASSWORD_LENGTH} characters` });
   }
 
   try {
@@ -78,12 +129,24 @@ app.post('/signup', async (req, res) => {
   }
 });
 
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+let dummyHash;
+function invalidLoginHash() {
+  // Compare against a real hash when the email is unknown so response timing
+  // does not reveal whether an account exists.
+  dummyHash ||= hashPassword(crypto.randomBytes(16).toString('hex'));
+  return dummyHash;
+}
+
+app.post('/login', loginLimiter, async (req, res) => {
+  const email = text(req.body?.email, 254).toLowerCase();
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
   // 1. Validate input
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
+  }
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    return res.status(400).json({ error: 'Invalid credentials' });
   }
 
   try {
@@ -94,14 +157,9 @@ app.post('/login', async (req, res) => {
         return res.status(500).json({ error: 'Database error' });
       }
 
-      if (!user) {
-        // Security best practice: same message for non-existent user or wrong password
-        return res.status(400).json({ error: 'Invalid credentials' });
-      }
-
-      // 3. Compare password
-      const isMatch = await comparePassword(password, user.password_hash);
-      if (!isMatch) {
+      // 3. Compare password (real or dummy hash, same message either way)
+      const isMatch = await comparePassword(password, user ? user.password_hash : await invalidLoginHash());
+      if (!user || !isMatch) {
         return res.status(400).json({ error: 'Invalid credentials' });
       }
 
@@ -109,7 +167,7 @@ app.post('/login', async (req, res) => {
       const token = jwt.sign(
         { user_id: user.id },
         JWT_SECRET,
-        { expiresIn: '7d' }
+        { expiresIn: '7d', algorithm: 'HS256' }
       );
 
       // 5. Response
@@ -139,26 +197,10 @@ app.get('/me', authenticateUser, (req, res) => {
   });
 });
 
-// Debug & Verification Routes (Temporary)
-app.get('/debug/tables', (req, res) => {
-  console.log('[Debug] Listing tables');
-  db.all("SELECT name FROM sqlite_master WHERE type='table'", (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
-});
-
-app.get('/debug/users', (req, res) => {
-  console.log('[Debug] Listing users');
-  db.all("SELECT id, username, email FROM users", (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
-});
-
 // Project Routes
 app.post('/projects', authenticateUser, (req, res) => {
-  const { title, is_public } = req.body;
+  const title = text(req.body?.title, 120);
+  const isPublic = req.body?.is_public === true || req.body?.is_public === 1;
   const user_id = req.user_id;
 
   // 1. Validate input
@@ -170,7 +212,7 @@ app.post('/projects', authenticateUser, (req, res) => {
     // 2. Insert into DB
     db.run(
       'INSERT INTO projects (title, user_id, is_public) VALUES (?, ?, ?)',
-      [title, user_id, is_public ? 1 : 0],
+      [title, user_id, isPublic ? 1 : 0],
       function(err) {
         if (err) {
           console.error('[Projects] Insert Error:', err.message);
@@ -184,7 +226,7 @@ app.post('/projects', authenticateUser, (req, res) => {
           id: projectId,
           title,
           user_id,
-          is_public: is_public ? 1 : 0
+          is_public: isPublic ? 1 : 0
         });
       }
     );
@@ -246,15 +288,21 @@ app.delete('/projects/:id', authenticateUser, (req, res) => {
 
 // Version Routes
 app.post('/versions', authenticateUser, (req, res) => {
-  const {
-    project_id, bpm, key, mood, genre, instruments, freq_min, freq_max, file_url
-  } = req.body;
+  const project_id = Number(req.body?.project_id);
   const user_id = req.user_id;
 
   // 1. Validate input
-  if (!project_id) {
+  if (!Number.isInteger(project_id) || project_id <= 0) {
     return res.status(400).json({ error: 'Project ID is required' });
   }
+  const bpm = req.body?.bpm ?? null;
+  const key = text(req.body?.key, 40) || null;
+  const mood = text(req.body?.mood, 60) || null;
+  const genre = text(req.body?.genre, 60) || null;
+  const instruments = text(req.body?.instruments, 400) || null;
+  const freq_min = req.body?.freq_min ?? null;
+  const freq_max = req.body?.freq_max ?? null;
+  const file_url = text(req.body?.file_url, 500) || null;
 
   try {
     // 2. Ensure project belongs to user
@@ -349,11 +397,31 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOADS_DIR),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.webm';
-    cb(null, `${Date.now()}-${crypto.randomBytes(4).toString('hex')}${ext}`);
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${crypto.randomUUID()}${ext}`);
   }
 });
-const upload = multer({ storage });
+
+const AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.webm', '.ogg', '.oga', '.m4a', '.aac', '.flac', '.mp4', '.aiff', '.aif', '.opus']);
+const AUDIO_MIME = /^(audio\/|video\/webm$|video\/mp4$|application\/ogg$)/;
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: Number(process.env.MAX_UPLOAD_BYTES) || 25 * 1024 * 1024,
+    files: 1,
+    fields: 20
+  },
+  fileFilter(req, file, cb) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    // The extension alone is not trusted: reject HTML/SVG/executables that
+    // would be served back from /audio.
+    if (!AUDIO_EXTENSIONS.has(ext) || !AUDIO_MIME.test(file.mimetype || '')) {
+      return cb(new Error('Unsupported audio file type'));
+    }
+    return cb(null, true);
+  }
+});
 
 // AI Tagging using local Ollama
 async function generateTagsWithOllama(description, name = 'Untitled') {
@@ -382,7 +450,7 @@ async function generateTagsWithOllama(description, name = 'Untitled') {
       prompt: prompt,
       stream: false,
       format: 'json'
-    });
+    }, { timeout: 5000 });
 
     const result = JSON.parse(response.data.response);
     console.log('[AI] Generated tags:', result);
@@ -403,127 +471,148 @@ async function generateTagsWithOllama(description, name = 'Untitled') {
 }
 
 // Alias for /record to match user request
-app.post('/upload', upload.single('audio'), async (req, res) => {
-  console.log('[Backend] /upload called');
+app.post('/upload', authenticateUser, upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No audio file uploaded' });
 
     const id = crypto.randomUUID();
     const filename = req.file.filename;
-    const description = req.body.description || '';
-
-    // Use direct Ollama tagging instead of Python service
-    const name = req.body.name || 'Untitled Recording';
+    const description = text(req.body?.description, 2000);
+    const name = text(req.body?.name, 120) || 'Untitled Recording';
+    const message = text(req.body?.message, 2000);
     const tags = await generateTagsWithOllama(description, name);
 
     db.run(`
-      INSERT INTO recordings (id, filename, parent_id, tags, description, name, message)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [id, filename, null, JSON.stringify(tags), description, name, req.body.message || ''], function(err) {
+      INSERT INTO recordings (id, filename, parent_id, tags, description, name, message, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [id, filename, null, JSON.stringify(tags), description, name, message, req.user_id], function(err) {
       if (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('[Upload] Insert Error:', err.message);
+        fs.unlink(req.file.path, () => {});
+        return res.status(500).json({ error: 'Failed to save recording' });
       }
-      const newRecord = { 
-        id, 
-        filename, 
-        tags, 
-        parent_id: null, 
-        name: req.body.name || 'Untitled Recording', 
-        message: req.body.message || '',
-        created_at: new Date().toISOString() 
-      };
-      res.json(newRecord);
+      res.json({
+        id,
+        filename,
+        tags,
+        parent_id: null,
+        name,
+        message,
+        created_at: new Date().toISOString()
+      });
     });
   } catch (error) {
-    console.error(error);
+    console.error('[Upload] Error:', error.message);
+    if (req.file?.path) fs.unlink(req.file.path, () => {});
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 // Endpoint for text-only analysis if needed
-app.post('/analyze-description', async (req, res) => {
-  const { description, name } = req.body;
-  console.log('[Backend] /analyze-description called');
-  const tags = await generateTagsWithOllama(description, name || 'Analysis');
+app.post('/analyze-description', authenticateUser, async (req, res) => {
+  const description = text(req.body?.description, 4000);
+  const name = text(req.body?.name, 120) || 'Analysis';
+  const tags = await generateTagsWithOllama(description, name);
   res.json(tags);
 });
 
-app.post('/record', upload.single('audio'), async (req, res) => {
+app.post('/record', authenticateUser, upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No audio file uploaded' });
 
     const id = crypto.randomUUID();
     const filename = req.file.filename;
-    const name = req.body.name || 'Untitled Recording';
-    const message = req.body.message || '';
-    const description = req.body.description || '';
+    const name = text(req.body?.name, 120) || 'Untitled Recording';
+    const message = text(req.body?.message, 2000);
+    const description = text(req.body?.description, 2000);
 
     const tags = await generateTagsWithOllama(description, name);
 
     db.run(`
-      INSERT INTO recordings (id, filename, parent_id, tags, description, name, message)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [id, filename, null, JSON.stringify(tags), description, name, message], function(err) {
+      INSERT INTO recordings (id, filename, parent_id, tags, description, name, message, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [id, filename, null, JSON.stringify(tags), description, name, message, req.user_id], function(err) {
       if (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('[Record] Insert Error:', err.message);
+        fs.unlink(req.file.path, () => {});
+        return res.status(500).json({ error: 'Failed to save recording' });
       }
-      const newRecord = { 
-        id, 
-        filename, 
-        tags, 
-        parent_id: null, 
-        name, 
+      res.json({
+        id,
+        filename,
+        tags,
+        parent_id: null,
+        name,
         message,
-        created_at: new Date().toISOString() 
-      };
-      res.json(newRecord);
+        created_at: new Date().toISOString()
+      });
     });
   } catch (error) {
-    console.error(error);
+    console.error('[Record] Error:', error.message);
+    if (req.file?.path) fs.unlink(req.file.path, () => {});
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-app.post('/branch', upload.single('audio'), async (req, res) => {
+app.post('/branch', authenticateUser, upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No audio file uploaded' });
-    const { parent_id, description } = req.body;
-    if (!parent_id) return res.status(400).json({ error: 'parent_id is required' });
+    const parent_id = text(req.body?.parent_id, 80);
+    if (!parent_id) {
+      fs.unlink(req.file.path, () => {});
+      return res.status(400).json({ error: 'parent_id is required' });
+    }
 
-    const id = crypto.randomUUID();
-    const filename = req.file.filename;
-
-    const tags = await generateTagsWithOllama(description, req.body.name || 'Branch');
-
-    db.run(`
-      INSERT INTO recordings (id, filename, parent_id, tags, description, name, message)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [id, filename, parent_id, JSON.stringify(tags), req.body.description || '', req.body.name || 'Untitled Recording', req.body.message || ''], function(err) {
-      if (err) {
-        return res.status(500).json({ error: err.message });
+    // A branch may only be attached to a recording owned by the same account.
+    db.get('SELECT id FROM recordings WHERE id = ? AND user_id = ?', [parent_id, req.user_id], async (lookupError, parent) => {
+      if (lookupError) {
+        fs.unlink(req.file.path, () => {});
+        return res.status(500).json({ error: 'Database error' });
       }
-      const newRecord = { 
-        id, 
-        filename, 
-        parent_id, 
-        tags, 
-        name: req.body.name || 'Untitled Recording', 
-        message: req.body.message || '',
-        created_at: new Date().toISOString() 
-      };
-      res.json(newRecord);
+      if (!parent) {
+        fs.unlink(req.file.path, () => {});
+        return res.status(403).json({ error: 'Forbidden: You do not own this recording' });
+      }
+
+      const id = crypto.randomUUID();
+      const filename = req.file.filename;
+      const name = text(req.body?.name, 120) || 'Untitled Recording';
+      const message = text(req.body?.message, 2000);
+      const description = text(req.body?.description, 2000);
+      const tags = await generateTagsWithOllama(description, name || 'Branch');
+
+      db.run(`
+        INSERT INTO recordings (id, filename, parent_id, tags, description, name, message, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, [id, filename, parent_id, JSON.stringify(tags), description, name, message, req.user_id], function(err) {
+        if (err) {
+          console.error('[Branch] Insert Error:', err.message);
+          fs.unlink(req.file.path, () => {});
+          return res.status(500).json({ error: 'Failed to save recording' });
+        }
+        res.json({
+          id,
+          filename,
+          parent_id,
+          tags,
+          name,
+          message,
+          created_at: new Date().toISOString()
+        });
+      });
     });
   } catch (error) {
-    console.error(error);
+    console.error('[Branch] Error:', error.message);
+    if (req.file?.path) fs.unlink(req.file.path, () => {});
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-// Helper to recursively find and delete recordings
-async function deleteRecursive(id) {
+// Helper to recursively find and delete recordings owned by one account.
+async function deleteRecursive(id, userId) {
   return new Promise((resolve, reject) => {
-    // 1. Find the recording and its children
-    db.all(`SELECT id, filename FROM recordings WHERE id = ? OR parent_id = ?`, [id, id], async (err, rows) => {
+    // 1. Find the recording and its children that belong to this user
+    db.all(`SELECT id, filename FROM recordings WHERE (id = ? OR parent_id = ?) AND user_id = ?`, [id, id, userId], async (err, rows) => {
       if (err) return reject(err);
       
       const parent = rows.find(r => r.id === id);
@@ -531,14 +620,14 @@ async function deleteRecursive(id) {
 
       // 2. Recursively delete children first
       for (const child of children) {
-        await deleteRecursive(child.id);
+        await deleteRecursive(child.id, userId);
       }
 
       // 3. Delete the parent record and file
       if (parent) {
         const filePath = path.join(UPLOADS_DIR, parent.filename);
         
-        db.run(`DELETE FROM recordings WHERE id = ?`, [id], (err) => {
+        db.run(`DELETE FROM recordings WHERE id = ? AND user_id = ?`, [id, userId], (err) => {
           if (err) {
             console.error(`Failed to delete DB record for ${id}:`, err.message);
             // Even if DB fails, we try to continue or report
@@ -558,24 +647,33 @@ async function deleteRecursive(id) {
   });
 }
 
-app.delete('/recordings/:id', async (req, res) => {
+app.delete('/recordings/:id', authenticateUser, async (req, res) => {
   const { id } = req.params;
   console.log(`[Backend] Recursive DELETE request received for ID: ${id}`);
-  
-  try {
-    await deleteRecursive(id);
-    res.json({ success: true, message: 'Recording and its branches deleted' });
-  } catch (err) {
-    console.error('[Backend] Delete failed:', err.message);
-    res.status(500).json({ error: err.message });
-  }
+
+  db.get('SELECT id FROM recordings WHERE id = ? AND user_id = ?', [id, req.user_id], async (lookupError, owned) => {
+    if (lookupError) {
+      console.error('[Backend] Delete lookup failed:', lookupError.message);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (!owned) {
+      return res.status(404).json({ error: 'Recording not found' });
+    }
+    try {
+      await deleteRecursive(id, req.user_id);
+      res.json({ success: true, message: 'Recording and its branches deleted' });
+    } catch (err) {
+      console.error('[Backend] Delete failed:', err.message);
+      res.status(500).json({ error: 'Could not delete recording' });
+    }
+  });
 });
 
-app.get('/versions', (req, res) => {
-  db.all(`SELECT * FROM recordings ORDER BY created_at ASC`, [], (err, rows) => {
+app.get('/versions', authenticateUser, (req, res) => {
+  db.all(`SELECT * FROM recordings WHERE user_id = ? ORDER BY created_at ASC`, [req.user_id], (err, rows) => {
     if (err) {
       console.error('Database error:', err);
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: 'Database error' });
     }
     
     try {
@@ -606,14 +704,13 @@ const FormData = require('form-data');
 // Python service URL removed (Node-centric refactor)
 // const PYTHON_SERVICE_URL = 'http://localhost:8000/api/v1';
 
-app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
-  console.log('[Backend] /analyze-audio called (Node-only mode)');
+app.post('/analyze-audio', authenticateUser, upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No audio file uploaded' });
 
     // In Node-only mode without Python librosa, we perform a simplified text-based analysis
     // or return a placeholder until a Node audio library is integrated.
-    const tags = await generateTagsWithOllama(req.body.description || 'Audio recording', req.body.name || 'Audio');
+    const tags = await generateTagsWithOllama(text(req.body?.description, 4000) || 'Audio recording', text(req.body?.name, 120) || 'Audio');
 
     // Clean up temporary file
     fs.unlink(req.file.path, (err) => {
@@ -626,22 +723,47 @@ app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
     });
   } catch (error) {
     console.error('[Backend] Analysis failed:', error.message);
+    if (req.file?.path) fs.unlink(req.file.path, () => {});
     res.status(500).json({ error: 'Analysis failed' });
   }
 });
 
-// Serve audio files statically
-app.use('/audio', express.static(UPLOADS_DIR));
+// Serve audio files statically. Filenames are random UUIDs and uploads are
+// restricted to audio MIME types so this cannot serve HTML or scripts.
+app.use('/audio', express.static(UPLOADS_DIR, {
+  dotfiles: 'deny',
+  index: false,
+  setHeaders(res) {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; media-src 'self'");
+  }
+}));
 
 // 404 Fallback route
 app.use((req, res) => {
-  res.status(404).json({
-    error: "Route not found",
-    path: req.originalUrl
-  });
+  res.status(404).json({ error: 'Route not found' });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Backend listening on port ${PORT}`);
+// Central error handler: multer rejections and unexpected failures return JSON
+// without leaking stack traces or file-system paths.
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+    const message = err.code === 'LIMIT_FILE_SIZE' ? 'File is too large' : 'Upload rejected';
+    return res.status(status).json({ error: message });
+  }
+  if (err?.message === 'Unsupported audio file type') {
+    return res.status(400).json({ error: err.message });
+  }
+  console.error('[API] Unhandled error:', err?.message);
+  return res.status(500).json({ error: 'Internal Server Error' });
 });
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Backend listening on port ${PORT}`);
+  });
+}
+
+module.exports = app;

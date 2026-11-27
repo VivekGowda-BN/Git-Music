@@ -12,7 +12,7 @@ export async function removeMedia(key) {
     tx.oncomplete=()=>{db.close();resolve();};tx.onabort=()=>{db.close();reject(tx.error);};});
 }
 export function loadLibrary(scope) {
-  const empty = {projects:[],applications:[],artist:{name:'',bio:'',gear:''},mixes:{}};
+  const empty = {projects:[],applications:[],artist:{name:'',bio:'',gear:'',photo:''},mixes:{}};
   try {
     const saved=JSON.parse(localStorage.getItem(`swarhub:${scope}`));
     if(saved&&Array.isArray(saved.projects)){
@@ -36,4 +36,20 @@ export function loadLibrary(scope) {
     }
   } catch { /* New workspace */ }
   return empty;
+}
+// Keep work recorded before signup reachable after the first account claims it.
+// The guest copy stays intact so signing out still shows the guest shelf.
+export function claimGuestLibrary(userId) {
+  try {
+    const target = `swarhub:supabase-${userId}`;
+    if (localStorage.getItem('swarhub:guest-claimed')) return false;
+    const current = JSON.parse(localStorage.getItem(target));
+    if (current?.projects?.length) return false;
+    const guest = localStorage.getItem('swarhub:guest');
+    if (!guest) return false;
+    if (!JSON.parse(guest)?.projects?.length) return false;
+    localStorage.setItem(target, guest);
+    localStorage.setItem('swarhub:guest-claimed', userId);
+    return true;
+  } catch { return false; }
 }

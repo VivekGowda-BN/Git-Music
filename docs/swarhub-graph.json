@@ -13,7 +13,15 @@
       "group": "backend"
     },
     {
+      "id": "backend/middleware/rateLimit.js",
+      "group": "backend"
+    },
+    {
       "id": "backend/server.js",
+      "group": "backend"
+    },
+    {
+      "id": "backend/test/security.test.js",
       "group": "backend"
     },
     {
@@ -37,11 +45,31 @@
       "group": "frontend"
     },
     {
+      "id": "frontend/scripts/testAuthBrowser.mjs",
+      "group": "frontend"
+    },
+    {
       "id": "frontend/scripts/testCaptureBrowser.mjs",
       "group": "frontend"
     },
     {
+      "id": "frontend/scripts/testProfilePhoto.mjs",
+      "group": "frontend"
+    },
+    {
       "id": "frontend/scripts/testProjectControls.mjs",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/scripts/testSecrets.mjs",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/scripts/testSecurityBrowser.mjs",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/scripts/testSupabaseLive.mjs",
       "group": "frontend"
     },
     {
@@ -110,6 +138,10 @@
     },
     {
       "id": "frontend/src/lib/api.js",
+      "group": "active-frontend"
+    },
+    {
+      "id": "frontend/src/lib/supabase.js",
       "group": "active-frontend"
     },
     {
@@ -229,6 +261,10 @@
       "group": "active-frontend"
     },
     {
+      "id": "frontend/src/studio/profilePhoto.js",
+      "group": "active-frontend"
+    },
+    {
       "id": "frontend/src/studio/projectCover.js",
       "group": "active-frontend"
     },
@@ -282,14 +318,6 @@
     },
     {
       "id": "GET /me",
-      "group": "endpoint"
-    },
-    {
-      "id": "GET /debug/tables",
-      "group": "endpoint"
-    },
-    {
-      "id": "GET /debug/users",
       "group": "endpoint"
     },
     {
@@ -538,6 +566,11 @@
       "relation": "imports"
     },
     {
+      "from": "frontend/src/studio/Auth.jsx",
+      "to": "frontend/src/lib/supabase.js",
+      "relation": "imports"
+    },
+    {
       "from": "frontend/src/studio/Capture.jsx",
       "to": "frontend/src/studio/audio.js",
       "relation": "imports"
@@ -653,6 +686,11 @@
       "relation": "imports"
     },
     {
+      "from": "frontend/src/studio/Portfolio.jsx",
+      "to": "frontend/src/studio/profilePhoto.js",
+      "relation": "imports"
+    },
+    {
       "from": "frontend/src/studio/Studio.jsx",
       "to": "frontend/src/studio/Home.jsx",
       "relation": "imports"
@@ -695,6 +733,16 @@
     {
       "from": "frontend/src/studio/Studio.jsx",
       "to": "frontend/src/studio/featured.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/lib/supabase.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/profilePhoto.js",
       "relation": "imports"
     },
     {
@@ -744,6 +792,11 @@
     },
     {
       "from": "backend/server.js",
+      "to": "backend/middleware/rateLimit.js",
+      "relation": "imports"
+    },
+    {
+      "from": "backend/server.js",
       "to": "backend/jwtSecret.js",
       "relation": "imports"
     },
@@ -770,16 +823,6 @@
     {
       "from": "backend/server.js",
       "to": "GET /me",
-      "relation": "serves"
-    },
-    {
-      "from": "backend/server.js",
-      "to": "GET /debug/tables",
-      "relation": "serves"
-    },
-    {
-      "from": "backend/server.js",
-      "to": "GET /debug/users",
       "relation": "serves"
     },
     {
@@ -841,6 +884,16 @@
       "from": "backend/server.js",
       "to": "POST /analyze-audio",
       "relation": "serves"
+    },
+    {
+      "from": "backend/test/security.test.js",
+      "to": "backend/server.js",
+      "relation": "imports"
+    },
+    {
+      "from": "backend/test/security.test.js",
+      "to": "backend/db.js",
+      "relation": "imports"
     }
   ]
 }
