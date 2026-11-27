@@ -22,23 +22,23 @@ try {
   assert.match(await mark.getAttribute('src'), /\/art\/swarhub-mark\.png$/);
   assert.equal(await mark.evaluate((image) => image.naturalWidth), 512, 'The 512px mark must decode');
   assert.match(await mark.evaluate((image) => getComputedStyle(image).filter), /invert\(1\)/, 'The header mark is recoloured for the dark nav');
-  assert.match(await page.locator('link[rel=icon]').getAttribute('href'), /\/art\/swarhub-mark\.png$/);
-
-  // Corners must be transparent; the middle of the clef must be opaque.
-  const alpha = await page.evaluate(async () => {
+  // Check the actual tab icon, which cannot inherit the header's CSS filter.
+  const icon = await page.locator('link[rel=icon]').evaluate(async (link) => {
     const image = new Image();
-    image.src = '/art/swarhub-mark.png';
+    image.src = link.href;
     await image.decode();
     const canvas = document.createElement('canvas');
     canvas.width = image.naturalWidth;
     canvas.height = image.naturalHeight;
     const context = canvas.getContext('2d');
     context.drawImage(image, 0, 0);
-    const read = (x, y) => context.getImageData(x, y, 1, 1).data[3];
-    return { corners: [read(0, 0), read(511, 0), read(0, 511), read(511, 511)], centre: read(256, 256) };
+    const pixel = (x, y) => [...context.getImageData(x, y, 1, 1).data];
+    return { corner: pixel(0, 0), centre: pixel(canvas.width / 2, canvas.height / 2) };
   });
-  assert.deepEqual(alpha.corners, [0, 0, 0, 0], 'The source background must be transparent');
-  assert.ok(alpha.centre > 200, 'The mark itself must stay opaque');
+  assert.equal(icon.corner[3], 0, 'The tab icon background must be transparent');
+  const [red, green, blue, opacity] = icon.centre;
+  assert.ok(Math.min(red, green, blue) >= 250, 'The tab clef must render white');
+  assert.equal(opacity, 255, 'The middle of the tab clef must be opaque');
 
   await page.screenshot({ path: join(tmpdir(), 'swarhub-brand-header.png'), clip: { x: 0, y: 0, width: 1280, height: 120 } });
 
