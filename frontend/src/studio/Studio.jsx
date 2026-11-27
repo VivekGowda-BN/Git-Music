@@ -17,7 +17,7 @@ import {safePhoto} from './profilePhoto';
 
 const links=[['Feed','/feed'],['Dashboard','/dashboard'],['Capture','/capture'],['Opportunities','/opportunities']];
 const footerLinks=[['Home','/home'],...links,['Profile','/profile']];
-function Brand(){return <Link className="brand" to="/home" aria-label="SwarHub home"><img alt="" src="/art/swarhub-mark.svg"/>SwarHub</Link>;}
+function Brand(){return <Link className="brand" to="/home" aria-label="SwarHub home"><img alt="" src="/art/swarhub-mark.png"/>SwarHub</Link>;}
 function PreviewProfile(){
   const {openPreview}=useOutletContext();
   const navigate=useNavigate();

@@ -49,6 +49,10 @@
       "group": "frontend"
     },
     {
+      "id": "frontend/scripts/testBranding.mjs",
+      "group": "frontend"
+    },
+    {
       "id": "frontend/scripts/testCaptureBrowser.mjs",
       "group": "frontend"
     },

@@ -67,7 +67,7 @@ export default function Auth({signup,callbackFailed}){
   }
 
   return <section className="access-page"><div className="access-card">
-    <div className="auth-brand"><img src="/art/swarhub-mark.svg" alt=""/> SwarHub</div>
+    <div className="auth-brand"><img src="/art/swarhub-mark.png" alt=""/> SwarHub</div>
     {sentTo?<><h1>Check your email</h1><p role="status">Open the confirmation link sent to <strong>{sentTo}</strong> in this browser to finish creating your account.</p>
       {notice&&<p className="access-note" role="status">{notice}</p>}
       {error&&<p className="error" role="alert">{error}</p>}

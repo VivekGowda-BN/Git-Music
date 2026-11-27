@@ -169,6 +169,7 @@ Residual risks to know about:
 - Run the analysis tests with `node --test src/__tests__/musicFeatures.test.js src/__tests__/signalProfile.test.js` in `frontend/`.
 - Browser suites run from the repository root: `node frontend/scripts/testAuthBrowser.mjs`, `node frontend/scripts/testCaptureBrowser.mjs`, and `node frontend/scripts/testProjectControls.mjs`. They use local Chrome; the auth suite mocks Supabase's endpoints and needs no keys.
 - Security suites: `node frontend/scripts/testSecurityBrowser.mjs` (URL tampering, cross-account isolation, stored XSS), `node frontend/scripts/testProfilePhoto.mjs` (upload, crop, rejection, removal), `node frontend/scripts/testSecrets.mjs` (no tracked credentials), and `npm test` in `backend/` (API authorization, CORS, rate limits, upload filtering).
+- `node frontend/scripts/testBranding.mjs` checks the transparent 512 × 512 brand mark in the header, auth card, and favicon.
 - With `frontend/.env` configured, `node frontend/scripts/testSupabaseLive.mjs` checks the real project wiring and makes one deliberately wrong login attempt; it creates no account and sends no email.
 - Edit [`frontend/src/studio/opportunities.js`](frontend/src/studio/opportunities.js) to curate the board.
 - See the [project map](docs/swarhub-graph.md) for routes, data flows, and storage, and [Capture analysis](docs/capture-analysis.md) for the measured accuracy and benchmark method.

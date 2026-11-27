@@ -4,6 +4,7 @@ Start here for the active application. Follow the relevant edge to its source. D
 
 ## Current handoff
 
+- Logo verification: `node frontend/scripts/testBranding.mjs` passed in Chrome; frontend lint and production build passed.
 - Dashboard starts empty. Saving a recording or upload creates a dated card; discarding does not. `library.js` removes old demo takes while retaining real branches. Delete remains on the project detail page.
 - `Dashboard.jsx` → `projectCovers()` → `frontend/public/art/projects/`: twelve licensed Pexels photos, assigned across the full recorded library before filtering. Use every photo before recycling the set. Opportunities has its own separate images.
 - Capture includes the responsive analysis guide and the revised key estimator. See `docs/capture-analysis.md` for the method and its evaluation.
@@ -14,6 +15,7 @@ Start here for the active application. Follow the relevant edge to its source. D
 - Supabase holds identity and sessions. Recordings and project history remain browser-local; syncing them to Supabase Storage/Postgres is not implemented.
 - Security pass: removed the unauthenticated `/debug/users` and `/debug/tables` routes; `/versions`, `/upload`, `/record`, `/branch`, `/analyze-*`, and `DELETE /recordings/:id` now require a JWT and are scoped to the token's user. JWT verification is pinned to HS256. Login/signup are rate limited, uploads are audio-only with a 25 MB cap and UUID filenames, CORS uses `CORS_ORIGINS`, and the API sets `nosniff`/frame/referrer headers. `frontend/public/_headers` adds CSP and related headers for static hosts.
 - Profile photos: `profilePhoto.js` centre-crops, resizes to 512 × 512, re-encodes as JPEG (dropping EXIF/GPS) and caps the stored string at 400 KB. `Portfolio.jsx` stores `artist.photo` in the local workspace; the header avatar and profile portrait render it only after `safePhoto()` validates a `data:image/` URL.
+- Brand mark: `frontend/public/art/swarhub-mark.png` is a 512 x 512 transparent PNG rebuilt from the supplied image. `index.html` uses it as the favicon, `Auth.jsx` as the auth-card mark, and `Studio.jsx` as the nav mark, recoloured with `filter:brightness(0) invert(1)` on the dark glass nav. The old `swarhub-mark.svg` was removed.
 - Verified: `node frontend/scripts/testAuthBrowser.mjs` passed against the real Supabase client with mocked auth endpoints (signup, resend, PKCE callback, guest-library claim, reload, sign-out, failed and successful password login, Google PKCE). `node frontend/scripts/testSupabaseLive.mjs` passed against the live project: signup form enabled, Google hidden, and the real auth endpoint returned `Invalid login credentials` for a deliberate wrong password. `testProjectControls.mjs`, `testCaptureBrowser.mjs`, the 18 analysis tests, lint, and build passed. `node frontend/scripts/testSecurityBrowser.mjs` passed URL tampering, cross-account isolation, stored-XSS escaping, and unsafe-link rejection. `node frontend/scripts/testProfilePhoto.mjs` passed upload, crop, persistence, rejection, and removal. `node frontend/scripts/testSecrets.mjs` passed with 304 tracked files and no local credentials. `npm test` in `backend/` passed 9 security tests.
 - Resume: password reset is the next account feature. Start any new task with a focused Graphify query as described in `AGENTS.md`.
 
@@ -30,6 +32,9 @@ flowchart TD
   shell --> calls["/opportunities · Portfolio.jsx · curated open calls and source directory"]
   shell --> artist["/profile · Portfolio.jsx"]
   shell --> auth["/login, /signup and /auth/callback · Auth.jsx"]
+  entry -->|favicon| mark["public/art/swarhub-mark.png"]
+  shell -->|navigation| mark
+  auth -->|account pages| mark
   auth --> supa["lib/supabase.js · Supabase client, PKCE, Google flag"]
   supa --> hosted["Supabase Auth → Postgres · users, sessions, email, Google OAuth"]
   home --> desk["ListeningDesk.jsx · cassette transport and bundled excerpt"]
