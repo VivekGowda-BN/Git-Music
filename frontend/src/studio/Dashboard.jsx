@@ -11,7 +11,7 @@ import {API_URL,getAuthHeaders} from '../lib/api';
 
 const dateFormat = new Intl.DateTimeFormat(undefined,{year:'numeric',month:'short',day:'numeric'});
 
-function ProjectCard({project,cover}) {
+function ProjectCard({project,cover,priority}) {
   let latest = null;
   for (const take of project.takes) {
     if (!take.created || take.part) continue;
@@ -21,7 +21,7 @@ function ProjectCard({project,cover}) {
     if (Number.isFinite(date.getTime()) && (!latest || date > latest)) latest = date;
   }
   return <Link className="project-card sleeve-card" to={`/dashboard?project=${project.id}`}>
-    <img className="sleeve-art" src={cover} alt="" loading="lazy"/>
+    <img className="sleeve-art" src={cover} alt="" loading={priority?'eager':'lazy'} decoding="async"/>
     <div className="sleeve-body">
       {latest ? <time className="micro" dateTime={latest.toISOString()}>{dateFormat.format(latest)}</time>
         : <small className="micro">Date unavailable</small>}
@@ -84,7 +84,7 @@ function Repository({project,initial,library,update}){
   </article>{current&&<SavedAnalysis key={current.id} take={current} onPreview={stop}/>}</div>;
 }
 export default function Dashboard(){
-  const {library,update,remote,removeRemote,accountError}=useOutletContext(),[query]=useSearchParams(),navigate=useNavigate(),projects=[...library.projects,...remote],project=projects.find(p=>p.id===query.get('project'));
+  const {library,update,remote,removeRemote,accountError,cloudOwner}=useOutletContext(),[query]=useSearchParams(),navigate=useNavigate(),projects=[...library.projects,...remote],project=projects.find(p=>p.id===query.get('project'));
   const [search,setSearch]=useState('');
   const [confirmDelete,setConfirmDelete]=useState(false),[deleting,setDeleting]=useState(false),[deleteError,setDeleteError]=useState('');
   const recorded=projects.filter(p=>p.takes.some(t=>!t.part));
@@ -97,8 +97,14 @@ export default function Dashboard(){
         await axios.delete(`${API_URL}/projects/${project.serverId??project.id.replace(/^account-/,'')}`,{headers:getAuthHeaders()});
         removeRemote?.(project.id);
       }else{
-        await Promise.all(project.takes.map(t=>removeMedia(t.id).catch(()=>{})));
         update(l=>({...l,projects:l.projects.filter(p=>p.id!==project.id),mixes:Object.fromEntries(Object.entries(l.mixes||{}).filter(([key])=>key!==project.id))}));
+        // Forks and a claimed guest shelf can share an original IndexedDB entry.
+        const referenced=new Set();
+        for(const key of Object.keys(localStorage).filter(k=>k.startsWith('swarhub:'))){
+          let saved;try{saved=JSON.parse(localStorage.getItem(key));}catch{continue;}
+          for(const p of saved?.projects||[])for(const t of p.takes)referenced.add(t.id);
+        }
+        await Promise.all(project.takes.filter(t=>!referenced.has(t.id)).map(t=>removeMedia(t.id).catch(()=>{})));
       }
       navigate('/dashboard');
     }catch(e){
@@ -109,7 +115,7 @@ export default function Dashboard(){
   if(project)return <section className="work wrap"><Link className="plain back-link" to="/dashboard"><ArrowLeft size={16}/> All projects</Link><h1>{project.title}<span>.</span></h1><p className="intro">{project.remote?'Account repository':project.demo?'Studio arrangement':'Audio repository'} · {project.takes.length} takes</p>
     <Repository key={`${project.id}-${project.takes.length}`} project={project} initial={query.get('take')} library={library} update={update}/>
     <details className="danger-zone"><summary><Trash2 size={16}/> Project settings</summary><div>
-      <p>Deleting <strong>{project.title}</strong> removes its takes {project.remote?'from your account':'from this browser'}. This cannot be undone.</p>
+       <p>Deleting <strong>{project.title}</strong> removes its takes {project.remote||cloudOwner?'from your account':'from this browser'}. This cannot be undone.</p>
       {deleteError&&<p role="alert" className="error">{deleteError}</p>}
       {confirmDelete?<div className="actions"><button className="btn danger" disabled={deleting} onClick={deleteProject}>{deleting?'Deleting…':'Delete permanently'}</button><button className="btn" disabled={deleting} onClick={()=>setConfirmDelete(false)}>Cancel</button></div>:<button className="btn danger" onClick={()=>setConfirmDelete(true)}><Trash2 size={15}/> Delete project</button>}
     </div></details></section>;
@@ -117,7 +123,7 @@ export default function Dashboard(){
     {accountError&&<p role="status" className="error">{accountError}</p>}
     <div className="shelf-tools"><label className="search-projects"><Search size={18}/><input type="search" aria-label="Search projects" placeholder="Search your projects…" value={search} onChange={e=>setSearch(e.target.value)}/></label>
       <Link className="btn" to="/feed"><Compass size={16}/> Explore</Link></div>
-    {visible.length>0&&<div className="project-cards" aria-label="Project library">{visible.map(p=><ProjectCard key={p.id} project={p} cover={covers.get(p.id)}/>)}</div>}
+    {visible.length>0&&<div className="project-cards" aria-label="Project library">{visible.map((p,i)=><ProjectCard key={p.id} project={p} cover={covers.get(p.id)} priority={i<3}/>)}</div>}
     {!recorded.length
       ? <div className="empty-library"><Mic aria-hidden="true"/><div><h3>No recordings yet</h3><p>Record or upload a take in Capture, then save it to see it here.</p></div></div>
       : !visible.length&&<div className="empty-library"><p>No projects match “{search}”.</p><button className="btn" onClick={()=>setSearch('')}>Clear search</button></div>}

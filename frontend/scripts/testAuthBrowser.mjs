@@ -7,7 +7,6 @@ import {createServer} from 'vite';
 const authOrigin='https://auth-fixture.invalid';
 process.env.VITE_SUPABASE_URL=authOrigin;
 process.env.VITE_SUPABASE_PUBLISHABLE_KEY='test-publishable-key';
-process.env.VITE_GOOGLE_AUTH_ENABLED='true';
 process.env.VITE_AUTH_PROVIDER='supabase';
 const server=await createServer({root:fileURLToPath(new URL('../',import.meta.url)),logLevel:'error',server:{host:'127.0.0.1',port:0,hmr:false}});
 let browser;
@@ -28,12 +27,6 @@ try{
       assert.equal(body.email,email);
       assert.equal(url.searchParams.get('redirect_to'),`${base}/auth/callback`);
       return route.fulfill({json:user});
-    }
-    if(url.pathname.endsWith('/authorize')){
-      assert.equal(url.searchParams.get('provider'),'google');
-      assert.ok(url.searchParams.get('code_challenge'));
-      assert.equal(url.searchParams.get('redirect_to'),`${base}/auth/callback`);
-      return route.fulfill({status:302,headers:{location:`${base}/auth/callback?code=fixture-code`}});
     }
     if(url.pathname.endsWith('/token')){
       const grant=url.searchParams.get('grant_type');
@@ -86,10 +79,9 @@ try{
   await page.waitForURL('**/dashboard');
   await page.getByRole('button',{name:'Sign out'}).click();
   await page.getByRole('link',{name:'Log in',exact:true}).click();
-  await page.getByRole('button',{name:'Continue with Google'}).click();
-  await page.waitForURL('**/dashboard');
-  assert.deepEqual(grants,['pkce','password','password','pkce']);
-  console.log('PASS signup, confirmation, reload, logout, password login, and Google PKCE callback (fixture provider)');
+  assert.equal(await page.getByRole('button',{name:'Continue with Google'}).count(),0,'Google sign-in should not be offered');
+  assert.deepEqual(grants,['pkce','password','password']);
+  console.log('PASS signup, confirmation, reload, logout, password login, and email-only auth page');
 }finally{
   await browser?.close();
   await server.close();

@@ -9,7 +9,6 @@ import {createServer} from 'vite';
 const authOrigin = 'https://auth-fixture.invalid';
 process.env.VITE_SUPABASE_URL = authOrigin;
 process.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'test-publishable-key';
-process.env.VITE_GOOGLE_AUTH_ENABLED = 'false';
 process.env.VITE_AUTH_PROVIDER = 'supabase';
 
 const people = {
@@ -33,9 +32,6 @@ try {
     const request = route.request();
     const url = new URL(request.url());
     const body = request.postDataJSON?.() || {};
-    if (url.pathname.endsWith('/settings')) {
-      return route.fulfill({ json: { external: { google: false } } });
-    }
     if (url.pathname.endsWith('/logout')) return route.fulfill({ status: 204 });
     if (url.pathname.endsWith('/token')) {
       const grant = url.searchParams.get('grant_type');

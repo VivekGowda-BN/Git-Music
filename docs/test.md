@@ -158,10 +158,10 @@ Located in `e2e/` directory. Run against local dev environment.
 4. Click "Apply →" on a card → new tab opens to external URL
 ```
 
-#### Journey 5: Google OAuth Login
+#### Journey 5: Email and Password Login
 ```
-1. Click "Login with Google"
-2. Google consent screen appears (mocked in test env)
+1. Click "Log in"
+2. Enter email and password
 3. Redirect back → authenticated state
 4. Profile avatar visible in navbar
 ```

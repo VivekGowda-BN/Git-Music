@@ -125,6 +125,7 @@ function frameAnalysis(samples, n, rate) {
   let hop = Math.max(1, Math.round(rate * .05));
   hop = Math.max(hop, Math.ceil(n / targetFrames));
   const count = Math.floor((n - 1) / hop) + 1;
+  const compareRepetitions = count >= Math.round(20 * rate / hop);
   const rms = new Float32Array(count);
   const chroma = new Float32Array(count * 12);
   const fftSize = 2048;
@@ -132,6 +133,14 @@ function frameAnalysis(samples, n, rate) {
   const window = hann(frameLength);
   const plan = createFft(fftSize);
   let peakRms = 0;
+  // All frames share the same frequency bins; map them to notes once per take.
+  const pitchClasses = new Uint8Array(fftSize / 2);
+  const firstBin = Math.max(1, Math.ceil(CHROMA_LOW_HZ * fftSize / rate));
+  const lastBin = Math.min(pitchClasses.length - 1, Math.floor(CHROMA_HIGH_HZ * fftSize / rate));
+  for (let k = firstBin; k <= lastBin; k++) {
+    const midi = Math.round(69 + 12 * Math.log2(k * rate / (fftSize * 440)));
+    pitchClasses[k] = ((midi % 12) + 12) % 12;
+  }
   for (let f = 0; f < count; f++) {
     const start = f * hop;
     const end = Math.min(n, start + hop);
@@ -144,17 +153,15 @@ function frameAnalysis(samples, n, rate) {
     const level = Math.sqrt(sum / Math.max(1, end - start));
     rms[f] = level;
     if (level > peakRms) peakRms = level;
+    if (!compareRepetitions) continue;
 
     const center = start + (end - start) / 2;
     const winStart = Math.max(0, Math.min(n - frameLength, Math.round(center - frameLength / 2)));
     const power = spectrum(plan, samples, winStart, frameLength, window);
     const base = f * 12;
     let total = 0;
-    for (let k = 1; k < fftSize / 2; k++) {
-      const hz = k * rate / fftSize;
-      if (hz < CHROMA_LOW_HZ || hz > CHROMA_HIGH_HZ) continue;
-      const midi = 69 + 12 * Math.log2(hz / 440);
-      const pitchClass = ((Math.round(midi) % 12) + 12) % 12;
+    for (let k = firstBin; k <= lastBin; k++) {
+      const pitchClass = pitchClasses[k];
       const p = power[k];
       chroma[base + pitchClass] += p;
       total += p;
@@ -308,18 +315,21 @@ function highlightOf(frames, rate) {
       const gap = Math.max(1, Math.round(HIGHLIGHT_GAP * frameRate));
       const levels = windows.map(window => window.level).sort((a, b) => a - b);
       const median = levels[Math.floor(levels.length / 2)] || 1;
-      for (const window of windows) {
-        let repetition = 0;
-        for (const other of windows) {
-          if (other === window || Math.abs(other.start - window.start) < gap) continue;
+      // Correlation is symmetric: one comparison updates both windows.
+      for (const window of windows) window.repetition = 0;
+      for (let i = 0; i < windows.length; i++) {
+        const window = windows[i];
+        for (let j = i + 1; j < windows.length; j++) {
+          const other = windows[j];
+          if (other.start - window.start < gap) continue;
           const match = .65 * cosine(window.chroma, other.chroma) +
             .35 * cosine(window.envelope, other.envelope);
-          if (match > repetition) repetition = match;
+          window.repetition = Math.max(match, window.repetition);
+          other.repetition = Math.max(match, other.repetition);
         }
-        window.repetition = repetition;
         const prior = .1 + .9 * Math.exp(-(((window.position - CHORUS_POSITION) / CHORUS_SPREAD) ** 2));
         const relativeLevel = window.level / Math.max(1e-9, median);
-        window.score = repetition * window.musical * prior *
+        window.score = window.repetition * window.musical * prior *
           (1 + .2 * (relativeLevel - 1));
       }
       windows.sort((a, b) => b.score - a.score);

@@ -14,7 +14,9 @@ function index(dir) {
     else if (/\.(m?js|jsx|css)$/.test(id) && fs.statSync(path.join(root,id)).isFile()) files.add(id);
   }
 }
-for (const dir of ['frontend', 'backend', 'scratch']) index(dir);
+for (const dir of ['frontend', 'backend', 'scratch']) {
+  if (fs.existsSync(path.join(root, dir))) index(dir);
+}
 for (const id of files) {
   const source = fs.readFileSync(path.join(root, id), 'utf8');
   for (const match of source.matchAll(/(?:\bfrom\s*|\bimport\s*|\brequire\(\s*)['"](\.[^'"]+)['"]/g)) {

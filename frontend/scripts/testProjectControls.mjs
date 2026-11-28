@@ -174,7 +174,7 @@ try {
       return image.getAttribute('src');
     })));
     assert.equal(new Set(sources).size,12);
-    assert.ok(sources.every(src=>/^\/art\/projects\/\d+\.jpg$/.test(src)));
+    assert.ok(sources.every(src=>/^\/art\/projects\/\d+\.webp$/.test(src)));
     await page.getByRole('searchbox').fill('Session 8');
     assert.equal(await photos.getAttribute('src'),sources[8]);
     await page.reload();

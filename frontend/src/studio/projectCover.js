@@ -26,7 +26,7 @@ export function projectCovers(projects) {
     let index = 0;
     for (const char of project.id) index = (31*index + char.charCodeAt(0)) % available.length;
     const [photo] = available.splice(index,1);
-    covers.set(project.id,`/art/projects/${photo}.jpg`);
+    covers.set(project.id,`/art/projects/${photo}.webp`);
   }
   return covers;
 }

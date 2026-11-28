@@ -18,19 +18,15 @@ try{
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
 
-  const settingsResponse=page.waitForResponse(response=>response.url().endsWith('/auth/v1/settings'));
   await page.goto('/signup');
   await page.getByRole('heading',{name:'Create account'}).waitFor();
-  const settings=await (await settingsResponse).json();
   assert.equal(await page.getByText('Account access is not configured on this site yet.').count(),0,'frontend/.env is not being loaded');
   assert.ok(await page.getByRole('button',{name:'Create account'}).isEnabled(),'Signup is disabled');
   assert.equal(await page.getByLabel('Artist name').count(),1);
   assert.equal(await page.getByLabel('Email address').count(),1);
   assert.equal(await page.locator('[name=password]').count(),1);
-  const google=page.getByRole('button',{name:'Continue with Google'});
-  if(settings.external?.google)await google.waitFor();
-  else assert.equal(await google.count(),0,'Google button shown while the provider is disabled');
-  console.log(`Signup form is live; Google provider ${settings.external?.google?'enabled':'not enabled'}`);
+  assert.equal(await page.getByRole('button',{name:'Continue with Google'}).count(),0,'Google sign-in should not be offered');
+  console.log('Signup form is live with email-only auth');
 
   await page.goto('/login');
   await page.getByLabel('Email address').fill('nobody@example.invalid');

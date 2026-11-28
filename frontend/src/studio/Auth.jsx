@@ -1,24 +1,16 @@
-import {useEffect,useState} from 'react';
+import {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {ArrowRight,Eye,EyeOff} from 'lucide-react';
 import axios from 'axios';
 import {API_URL,setAuthSession} from '../lib/api';
-import {callbackUrl,googleEnabled,googleProviderEnabled,legacyAuth,supabase} from '../lib/supabase';
+import {callbackUrl,legacyAuth,supabase} from '../lib/supabase';
 
 const recoveryPage=import.meta.env.VITE_ACCOUNT_RECOVERY_URL;
-const legacyGoogle=legacyAuth && import.meta.env.VITE_GOOGLE_LOGIN_URL;
 
 export default function Auth({signup,callbackFailed}){
   const [busy,setBusy]=useState(false),[show,setShow]=useState(false),[sentTo,setSentTo]=useState(''),[notice,setNotice]=useState('');
   const [error,setError]=useState(callbackFailed?'Sign-in was not completed. Try logging in again, or open the confirmation link in the browser where you signed up.':'');
-  const [googleReady,setGoogleReady]=useState(googleEnabled);
   const configured=!!supabase||legacyAuth;
-  useEffect(()=>{
-    if(googleEnabled||legacyGoogle||!supabase)return;
-    let active=true;
-    googleProviderEnabled().then(enabled=>{if(active)setGoogleReady(enabled);});
-    return ()=>{active=false;};
-  },[]);
 
   async function submit(event){
     event.preventDefault();
@@ -57,15 +49,6 @@ export default function Auth({signup,callbackFailed}){
     finally{setBusy(false);}
   }
 
-  async function google(){
-    if(legacyGoogle){window.location.assign(legacyGoogle);return;}
-    setBusy(true);setError('');
-    try{
-      const {error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:callbackUrl()}});
-      if(error)throw error;
-    }catch(err){setError(err.message||'Google sign-in is unavailable.');setBusy(false);}
-  }
-
   return <section className="access-page"><div className="access-card">
     <div className="auth-brand"><img src="/art/swarhub-mark.png" alt=""/> SwarHub</div>
     {sentTo?<><h1>Check your email</h1><p role="status">Open the confirmation link sent to <strong>{sentTo}</strong> in this browser to finish creating your account.</p>
@@ -82,7 +65,6 @@ export default function Auth({signup,callbackFailed}){
         {error&&<p className="error" role="alert">{error}</p>}
         <button disabled={busy||!configured} className="btn primary">{busy?'Please wait…':signup?'Create account':'Log in'}<ArrowRight size={16}/></button>
       </form>
-      {(googleReady||legacyGoogle)&&<><div className="or"><span/>or<span/></div><button disabled={busy} className="btn google-btn" onClick={google}>Continue with Google</button></>}
       <p className="access-switch">{signup?'Already have an account?':'New to SwarHub?'} <Link to={signup?'/login':'/signup'}>{signup?'Log in':'Create an account'}</Link></p>
     </>}
   </div></section>;

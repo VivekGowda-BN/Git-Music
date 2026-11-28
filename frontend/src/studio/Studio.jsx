@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import axios from 'axios';
 import {BrowserRouter,Link,NavLink,Navigate,Outlet,Route,Routes,useLocation,useNavigate,useOutletContext} from 'react-router-dom';
 import {ArrowUpRight,Disc3,LogOut,Menu,Send,X} from 'lucide-react';
@@ -14,6 +14,7 @@ import Auth from './Auth';
 import {featured} from './featured';
 import {legacyAuth,supabase} from '../lib/supabase';
 import {safePhoto} from './profilePhoto';
+import {syncRecordings,trackProjectDeletes} from './recordingSync';
 
 const links=[['Feed','/feed'],['Dashboard','/dashboard'],['Capture','/capture'],['Opportunities','/opportunities']];
 const footerLinks=[['Home','/home'],...links,['Profile','/profile']];
@@ -45,6 +46,45 @@ function Shell({scope,identity}){
   const [preview,setPreview]=useState(()=>sessionStorage.getItem('swarhub-preview')==='on'),reduced=useReducedMotion();
   const [notice,setNotice]=useState(()=>{const text=sessionStorage.getItem('swarhub-notice');if(text)sessionStorage.removeItem('swarhub-notice');return text||'';});
   const signedIn=scope!=='guest',artistView=signedIn||preview;
+  const latest=useRef(library),requestSync=useRef(null),owner=identity?.id;
+  const [syncStatus,setSyncStatus]=useState('');
+  const store=useCallback(next=>{
+    try{
+      localStorage.setItem(`swarhub:${scope}`,JSON.stringify(next));
+      latest.current=next;setLibrary(next);setStorageError('');
+    }catch{setStorageError('Browser storage is full or unavailable. Your changes could not be saved.');throw Error('Storage unavailable');}
+  },[scope]);
+  useEffect(()=>{
+    if(!owner)return;
+    const controller=new AbortController();
+    let running=false,queued=false,timer;
+    async function refresh(){
+      clearTimeout(timer);
+      if(running){queued=true;return;}
+      running=true;queued=false;
+      const snapshot=latest.current;
+      setSyncStatus('Syncing account recordings…');
+      try{
+        const result=await syncRecordings(owner,snapshot,controller.signal);
+        controller.signal.throwIfAborted();
+        if(latest.current!==snapshot){queued=true;return;}
+        if(JSON.stringify(result.library)!==JSON.stringify(snapshot))store(result.library);
+        if(result.error)throw Error(result.error);
+        setSyncStatus('Recordings synced to your account.');
+      }catch(error){
+        if(!controller.signal.aborted)setSyncStatus(error.code==='PGRST205'||error.code==='42P01'
+          ? 'Cloud recording storage isn’t set up yet. Your recordings are saved on this device.'
+          : 'Recordings haven’t synced. Local takes are still on this device.');
+      }finally{
+        running=false;
+        if(!controller.signal.aborted)timer=setTimeout(refresh,queued?0:60000);
+      }
+    }
+    requestSync.current=refresh;
+    refresh();
+    window.addEventListener('online',refresh);window.addEventListener('focus',refresh);
+    return ()=>{controller.abort();clearTimeout(timer);requestSync.current=null;window.removeEventListener('online',refresh);window.removeEventListener('focus',refresh);};
+  },[owner,store]);
   const openPreview=useCallback(()=>{if(!signedIn){sessionStorage.setItem('swarhub-preview','on');setPreview(true);}},[signedIn]);
   async function signOut(){
     sessionStorage.setItem('swarhub-preview','off');setPreview(false);setMenu(false);
@@ -67,12 +107,16 @@ function Shell({scope,identity}){
       }catch{if(active)setAccountError('Account repositories could not be loaded. Your local workspace is available.');}
     })();return()=>{active=false;};
   },[scope]);
-  function update(fn){const next=fn(library);try{localStorage.setItem(`swarhub:${scope}`,JSON.stringify(next));setLibrary(next);setStorageError('');}catch{setStorageError('Browser storage is full or unavailable. Your changes could not be saved.');throw Error('Storage unavailable');}}
+  function update(fn){
+    const before=latest.current,next=fn(before);
+    store(owner?trackProjectDeletes(before,next):next);
+    if(next.projects!==before.projects||next.mixes!==before.mixes)requestSync.current?.();
+  }
   function removeRemote(id){setRemote(list=>list.filter(p=>p.id!==id));}
   return <><a className="skip" href="#main">Skip to content</a><header className="top glass-nav" onKeyDown={e=>{if(e.key==='Escape')setMenu(false);}}><div className="nav-wrap wrap" onClick={e=>{if(e.target.closest('a'))setMenu(false);}}><Brand/><nav id="main-navigation" aria-label="Main navigation" className={menu?'open':''}>{links.map(([name,path])=><NavLink className={({isActive})=>isActive?'active':''} key={path} to={path}>{({isActive})=><>{isActive&&<motion.i aria-hidden="true" className="nav-highlight" layoutId="nav-active" transition={{duration:reduced?0:.22}}/>}<span>{name}</span></>}</NavLink>)}</nav>
     <div className="account-nav">{artistView?<><Link to="/profile" className="avatar-link" aria-label={`Open ${library.artist.name||user?.username||'artist'} profile`} title="Artist profile" aria-current={pathname==='/profile'?'page':undefined}><img src={safePhoto(library.artist.photo)||'/art/artist.svg'} alt=""/></Link><button className="login-link" onClick={signOut} aria-label="Sign out"><LogOut size={14}/><span>Sign out</span></button></>:<><Link className="text-login" to="/login">Log in</Link><Link className="login-link" to="/signup">Sign up <ArrowUpRight size={14}/></Link></>}</div>
     <button className="menu-toggle" aria-controls="main-navigation" aria-expanded={menu} aria-label={menu?'Close navigation':'Open navigation'} onClick={()=>setMenu(v=>!v)}>{menu?<X/>:<Menu/>}</button></div></header>
-    <main id="main" tabIndex="-1">{notice&&<p className="wrap notice" role="status">{notice}<button aria-label="Dismiss message" onClick={()=>setNotice('')}>×</button></p>}{storageError&&<p className="wrap error" role="alert">{storageError}</p>}{identity&&accountError&&<p className="wrap error" role="alert">{accountError}</p>}<Outlet context={{library,update,remote,removeRemote,user,accountError:legacyAuth?accountError:'',previewArtist:!signedIn&&preview,openPreview}}/></main><Footer/></>;
+    <main id="main" tabIndex="-1">{notice&&<p className="wrap notice" role="status">{notice}<button aria-label="Dismiss message" onClick={()=>setNotice('')}>×</button></p>}{storageError&&<p className="wrap error" role="alert">{storageError}</p>}{identity&&accountError&&<p className="wrap error" role="alert">{accountError}</p>}{owner&&pathname==='/dashboard'&&<div className="wrap notice"><span role="status">{syncStatus}</span><button onClick={()=>requestSync.current?.()}>Sync now</button></div>}<Outlet context={{library,update,remote,removeRemote,user,cloudOwner:owner,accountError:legacyAuth?accountError:'',previewArtist:!signedIn&&preview,openPreview}}/></main><Footer/></>;
 }
 const legacyScope=()=>legacyAuth&&getAuthToken()?`artist-${getAuthUserId()||'local'}`:'guest';
 

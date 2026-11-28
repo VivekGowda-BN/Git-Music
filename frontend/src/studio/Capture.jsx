@@ -34,13 +34,16 @@ export default function Capture(){
   async function ingest(blob,label,recorded=false,created=new Date().toISOString()){
     job.current?.abort();const controller=new AbortController();job.current=controller;
     setError('');setTake(null);setPhase('analysing');setName(label);
-    setMood('');setVisibility('');setTitle(recorded?'':label);setFiling(false);
+    setMood('');setVisibility('');setTitle(recorded?'':label);setFiling(recorded);
     try{
       const {meta,hook}=await analyse(blob,{signal:controller.signal});if(controller.signal.aborted)return;
       setTake({blob,meta,created,url:URL.createObjectURL(blob),clip:hook?URL.createObjectURL(hook):null,hook});
-      // A fresh recording goes straight to naming; cancelling the dialog deletes it.
-      if(recorded)setFiling(true);
-    }catch(e){if(alive.current&&!controller.signal.aborted)setError(e.name==='EncodingError'?'This audio could not be decoded. Try a WAV or MP3 file.':e.message);}
+    }catch(e){if(alive.current&&!controller.signal.aborted){
+      if(recorded&&blob.size){
+        setTake({blob,meta:{},created,url:URL.createObjectURL(blob),clip:null,hook:null});
+        setError('Analysis was unavailable. You can still save the original recording.');
+      }else setError(e.name==='EncodingError'?'This audio could not be decoded. Try a WAV or MP3 file.':e.message);
+    }}
     finally{if(alive.current&&job.current===controller){setPhase('idle');job.current=null;}}
   }
   async function record(){
@@ -76,7 +79,7 @@ export default function Capture(){
   function discard(){
     if(phase==='saving')return;
     job.current?.abort();job.current=null;
-    setFiling(false);setTake(null);setError('');
+    setFiling(false);setTake(null);setError('');setPhase('idle');
     setName('');setTitle('');setMood('');setVisibility('');setParent('');
   }
   function pick(f){if(f&&phase==='idle')ingest(f,f.name.replace(/\.[^.]+$/,''));}
@@ -109,7 +112,7 @@ export default function Capture(){
         <label>Project name <input autoFocus value={title} maxLength={120} required placeholder="Name this recording" onChange={e=>setTitle(e.target.value)}/></label>
         <fieldset className="visibility"><legend>Project visibility · required</legend>{['private','public'].map(v=><label key={v}><input type="radio" name="visibility" value={v} required checked={visibility===v} onChange={()=>setVisibility(v)}/>{v==='private'?'Private':'Public'}</label>)}</fieldset></>}
       <label>Mood (optional)<input value={mood} maxLength={60} placeholder="e.g. Warm, restless, reflective" onChange={e=>setMood(e.target.value)}/></label>
-      {error&&<p role="alert" className="error">{error}</p>}<small className="dialog-note">Cancel deletes this recording. Choose Review audio to listen before saving.</small><div className="actions"><button className="btn primary" disabled={!take||phase!=='idle'}>{phase==='analysing'?'Reading audio…':phase==='saving'?'Saving…':'Save to dashboard'}</button><button type="button" disabled={phase==='saving'} className="btn" onClick={()=>setFiling(false)}>Review audio</button><button type="button" disabled={phase==='saving'} className="btn danger" onClick={discard}>Cancel &amp; delete take</button></div>
+       {error&&<p role="alert" className="error">{error}</p>}<small className="dialog-note">{phase==='analysing'?'Name your take while analysis runs.':'Cancel deletes this recording. Choose Review audio to listen before saving.'}</small><div className="actions"><button className="btn primary" disabled={!take||phase!=='idle'}>{phase==='analysing'?'Reading audio…':phase==='saving'?'Saving…':'Save to dashboard'}</button><button type="button" disabled={!take||phase==='saving'} className="btn" onClick={()=>setFiling(false)}>Review audio</button><button type="button" disabled={phase==='saving'} className="btn danger" onClick={discard}>Cancel &amp; delete take</button></div>
     </form></FileDialog>}
     {error&&!filing&&<p role="alert" className="error">{error}</p>}</section>;
 }

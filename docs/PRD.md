@@ -47,11 +47,10 @@
 ### 3.4 Auth & Profile
 - **Completely free without account** — Capture/Browse work anonymously (data stored locally / not persisted on server)
 - **Sign up / Login** to persist projects permanently
-  - Google OAuth (via Supabase Auth)
   - Email + password (via Supabase Auth)
   - JWT access token (stored in memory or httpOnly cookie, **not** localStorage long-term)
 - **Profile page:**
-  - Avatar (from Google or uploaded)
+  - Uploaded avatar
   - Display name + bio (editable)
   - 4–5 most recent projects preview
   - GitHub-style contribution graph (activity heatmap by day)
@@ -68,7 +67,7 @@
 | US-04 | Musician | Branch from a recording | I can add layers without polluting the main take |
 | US-05 | Musician | See a visual tree of branches | I understand the evolution of a track |
 | US-06 | Artist | Browse opportunities | I can find gigs and competitions |
-| US-07 | User | Log in with Google | I don't need a new password |
+| US-07 | User | Log in with my email and password | I can reach my saved projects on any browser |
 | US-08 | Logged-in User | See my contribution graph | I feel motivated to create daily |
 | US-09 | Musician | Get a "best clip for social media" suggestion | I can post easily |
 

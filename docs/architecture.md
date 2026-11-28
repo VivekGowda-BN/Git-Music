@@ -13,14 +13,14 @@ flowchart TD
     AIService["AI Analysis\nPython / Gemini API"]
     DB["Supabase Postgres"]
     Storage["Supabase Storage\n(audio/video files)"]
-    Auth["Supabase Auth\n(JWT + Google OAuth)"]
+    Auth["Supabase Auth\n(email + JWT)"]
 
     Browser -->|REST / JSON| API
     API -->|analyzeAudio()| AIService
     AIService -->|tags + best-clip| API
     API -->|SQL| DB
     API -->|upload / signed URL| Storage
-    Browser -->|OAuth flow| Auth
+    Browser -->|email sign-in| Auth
     Auth -->|JWT| Browser
     API -->|verify JWT| Auth
 ```
@@ -84,7 +84,6 @@ frontend/src/
 | PUT | `/profile` | JWT | Update name, bio, avatar |
 | POST | `/projects/:id/branches` | JWT | Create instrument branch on a project |
 | GET | `/projects/:id/branches` | JWT | Get branch tree for a project |
-| POST | `/auth/google` | None | Google OAuth callback handler |
 
 ### Critical Fixes Needed
 
@@ -207,10 +206,6 @@ Email/Password:
   Browser → POST /auth/signup (Supabase Auth SDK) → email confirmation
   Browser → POST /auth/signin → { access_token, refresh_token }
   access_token stored in memory (Zustand), refresh_token in httpOnly cookie
-
-Google OAuth:
-  Browser → Supabase Auth signInWithOAuth({ provider: 'google' })
-  → Google consent screen → Supabase callback → JWT issued
 
 Protected API calls:
   Frontend adds `Authorization: Bearer <access_token>` header

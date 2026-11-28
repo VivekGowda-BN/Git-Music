@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react';
 import {Activity,Download,Scissors} from 'lucide-react';
 import {analyse,analysisVersion,clock} from './audio';
-import {media} from './library';
+import {readTake} from './cloudMedia';
 import {audioSource} from './playback';
 
 const hz=v=>v>=1000?`${(v/1000).toFixed(1)} kHz`:`${Math.round(v)} Hz`;
@@ -39,7 +39,7 @@ export function SavedAnalysis({take,onPreview}){
     const controller=new AbortController();let active=true,url,source;
     (async()=>{
       try{
-        const record=!take.part&&!take.file_url?await media(take.id):null;
+        const record=!take.part&&!take.file_url?await readTake(take):null;
         let meta=take,hook=record?.hook;
         if(take.analysisVersion!==analysisVersion||(!hook&&take.hasHook!==false)){
           let blob=record?.blob;

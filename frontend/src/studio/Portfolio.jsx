@@ -36,11 +36,9 @@ function OpportunityCard({call,index}){
   return <motion.a ref={ref} className="opp-card" data-type={call.type} href={call.url} target="_blank" rel="noreferrer noopener"
     aria-label={`${call.title} on ${call.source}, opens in a new tab`}
     style={{rotateX:reduced?0:rotateX,rotateY:reduced?0:rotateY,transformPerspective:1100}}
-    initial={reduced?false:{opacity:0,y:24}} animate={{opacity:1,y:0}}
-    transition={{duration:.55,delay:Math.min(index,9)*.045,ease:[.22,1,.36,1]}}
     whileHover={canHover&&!reduced?{y:-7,transition:{type:'spring',stiffness:300,damping:24}}:undefined}
     onPointerMove={move} onPointerLeave={rest}>
-    <div className="opp-art"><img src={`/art/opportunities/${coverPhotos[call.instrument]||'stage'}.jpg`} alt="" width="800" height="380"/></div>
+    <div className="opp-art"><img src={`/art/opportunities/${coverPhotos[call.instrument]||'stage'}.webp`} alt="" width="800" height="380" loading={index<3?'eager':'lazy'} decoding="async"/></div>
     <span className="opp-badge" title={call.source}><img src={platformIcons[call.source]} alt=""/></span>
     <div className="opp-body"><h2>{call.title}</h2><p>{call.summary}</p></div>
     <div className="opp-meta">

@@ -45,6 +45,10 @@
       "group": "frontend"
     },
     {
+      "id": "frontend/scripts/captureReadmeScreenshot.mjs",
+      "group": "frontend"
+    },
+    {
       "id": "frontend/scripts/testAuthBrowser.mjs",
       "group": "frontend"
     },
@@ -62,6 +66,10 @@
     },
     {
       "id": "frontend/scripts/testProjectControls.mjs",
+      "group": "frontend"
+    },
+    {
+      "id": "frontend/scripts/testRecordingSync.mjs",
       "group": "frontend"
     },
     {
@@ -233,6 +241,10 @@
       "group": "active-frontend"
     },
     {
+      "id": "frontend/src/studio/cloudMedia.js",
+      "group": "active-frontend"
+    },
+    {
       "id": "frontend/src/studio/community.css",
       "group": "active-frontend"
     },
@@ -273,6 +285,10 @@
       "group": "active-frontend"
     },
     {
+      "id": "frontend/src/studio/recordingSync.js",
+      "group": "active-frontend"
+    },
+    {
       "id": "frontend/src/studio/signalProfile.js",
       "group": "previous-frontend"
     },
@@ -299,10 +315,6 @@
     {
       "id": "frontend/vite.config.js",
       "group": "frontend"
-    },
-    {
-      "id": "scratch/inspect_db.js",
-      "group": "scratch"
     },
     {
       "id": "GET /",
@@ -600,6 +612,16 @@
       "relation": "imports"
     },
     {
+      "from": "frontend/src/studio/cloudMedia.js",
+      "to": "frontend/src/lib/supabase.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/cloudMedia.js",
+      "to": "frontend/src/studio/library.js",
+      "relation": "imports"
+    },
+    {
       "from": "frontend/src/studio/Dashboard.jsx",
       "to": "frontend/src/studio/audio.js",
       "relation": "imports"
@@ -671,7 +693,7 @@
     },
     {
       "from": "frontend/src/studio/playback.js",
-      "to": "frontend/src/studio/library.js",
+      "to": "frontend/src/studio/cloudMedia.js",
       "relation": "imports"
     },
     {
@@ -697,6 +719,16 @@
     {
       "from": "frontend/src/studio/Portfolio.jsx",
       "to": "frontend/src/studio/profilePhoto.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/recordingSync.js",
+      "to": "frontend/src/lib/supabase.js",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/recordingSync.js",
+      "to": "frontend/src/studio/cloudMedia.js",
       "relation": "imports"
     },
     {
@@ -755,13 +787,18 @@
       "relation": "imports"
     },
     {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/recordingSync.js",
+      "relation": "imports"
+    },
+    {
       "from": "frontend/src/studio/TakeAnalysis.jsx",
       "to": "frontend/src/studio/audio.js",
       "relation": "imports"
     },
     {
       "from": "frontend/src/studio/TakeAnalysis.jsx",
-      "to": "frontend/src/studio/library.js",
+      "to": "frontend/src/studio/cloudMedia.js",
       "relation": "imports"
     },
     {

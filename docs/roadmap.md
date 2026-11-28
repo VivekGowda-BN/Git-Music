@@ -109,7 +109,7 @@ flowchart LR
 **Objective:** Transition seamlessly from guest usage to permanent cloud persistence.
 
 - **Tasks:**
-  1. Setup Supabase Auth / JWT authentication flow (Email/Password + Google OAuth).
+  1. Setup Supabase Auth / JWT authentication flow (email/password).
   2. Secure token handling:
      - Store access token in memory/Zustand store; handle token refresh via secure cookies.
      - Eliminate insecure hardcoded secrets (`JWT_SECRET = 'secret123'`).
@@ -118,7 +118,7 @@ flowchart LR
      - Carousel / list of user's 4–5 recent active projects.
      - GitHub-style 52×7 contribution activity heatmap (`ContribGraph.jsx`) logging captures, branches, and commits.
 - **Verification:**
-  - Google OAuth login and email/password signup create associated profile records.
+  - Email/password signup and login create associated profile records.
   - Protected API endpoints reject unauthorized calls with 401/403.
 
 ---
