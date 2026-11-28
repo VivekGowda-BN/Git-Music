@@ -125,9 +125,11 @@ Until this migration runs, the Dashboard says cloud storage is not set up and ke
 In **Authentication → URL Configuration**:
 
 - **Site URL**: `http://localhost:5173` for local work, or your deployed origin.
-- **Redirect URLs**: add every origin that will finish a sign-in:
+- **Redirect URLs**: add every origin that will finish a sign-in or password reset:
   - `http://localhost:5173/auth/callback`
+  - `http://localhost:5173/reset-password`
   - `https://your-domain.example/auth/callback`
+  - `https://your-domain.example/reset-password`
 
 Supabase only redirects back to URLs on this list. When you deploy, add the production callback and update the Site URL.
 
@@ -136,6 +138,12 @@ Supabase only redirects back to URLs on this list. When you deploy, add the prod
 In **Authentication → Providers → Email**, **Confirm email** is on by default. New artists then see a “Check your email” screen and must open the link in the same browser before logging in. You can resend the message from that screen.
 
 For quick local testing you may turn confirmation off. Signup then returns a session immediately and goes straight to the dashboard.
+
+### Password reset
+
+On the login page, choose **Forgot password?**, enter the account email, and send the link. Supabase emails a recovery link that returns to `/reset-password`; the browser exchanges the one-time code, then asks for a new password and confirmation. The new password works on every device. If the link is opened late, the page says it has expired and offers a new request.
+
+The reset link only works on an origin listed in the Supabase redirect URLs, so add `/reset-password` for localhost and production as shown above.
 
 ### How recordings move between browsers
 
@@ -176,7 +184,7 @@ Accounts created against the Express backend are not copied into Supabase. Keep 
 
 ## Security
 
-- **Accounts.** Supabase Auth owns email signup, confirmation, and sessions. A workspace is keyed by the Supabase user ID, so switching accounts cannot show another account's projects or audio. `/dashboard?project=…` only resolves IDs from the signed-in library or from `/my-projects`, which the API filters by the bearer token's user.
+- **Accounts.** Supabase Auth owns email signup, confirmation, password reset, and sessions. A workspace is keyed by the Supabase user ID, so switching accounts cannot show another account's projects or audio. `/dashboard?project=…` only resolves IDs from the signed-in library or from `/my-projects`, which the API filters by the bearer token's user.
 - **Cloud sync.** `recording_projects` has row-level security, and every storage policy is scoped to the owner's folder. The table grants are limited to `select`, `insert`, and `update`; a deleted row cannot be edited. Project updates use a compare-and-swap revision. Audio objects are immutable and capped at 4 MB each.
 - **Legacy API.** Recordings and uploads now require a JWT; every project, version, branch, and delete is checked against the token's user. Debug routes that listed users and tables were removed. JWT verification is pinned to HS256. Login and signup are rate limited, and unknown emails are compared against a dummy hash to reduce timing leaks.
 - **Uploads.** Audio only (extension and MIME), 25 MB default cap, one file per request, random UUID filenames, `nosniff` on `/audio`. HTML, SVG, and executables are rejected so the static audio route cannot serve active content.
@@ -188,7 +196,7 @@ Residual risks to know about:
 - Recordings are cached in IndexedDB and project metadata in localStorage on each device, so anyone with access to the unlocked browser profile can read them. The Supabase copies are protected by row-level security and a private bucket. Clear site data on shared computers.
 - Uploads are capped at 4 MB per stored object and split into parts, so a very long uncompressed WAV can need many requests. Sync runs in the background; closing the tab immediately after saving can delay the upload until the next visit.
 - Legacy audio files are served from `/audio` so `<audio>` can stream them without a header. Filenames are random UUIDs, but the route is not per-user. Do not use the legacy backend for private material until signed URLs are added.
-- Password reset and account recovery are not built yet.
+- Password reset links are single-use and expire. Anyone with access to the inbox can reset the password, so keep the account email secure. Updating a password does not sign out sessions already open on other devices.
 - Sessions are kept in browser storage by `supabase-js`. The CSP and escaped rendering reduce XSS exposure, but any future `dangerouslySetInnerHTML` or third-party script would undermine that.
 - Apply the bundled migration before launch and review the policies whenever a sharing feature is added.
 
@@ -196,7 +204,7 @@ Residual risks to know about:
 
 - Run `npm run lint` and `npm run build` in `frontend/`.
 - Run the analysis tests with `node --test src/__tests__/musicFeatures.test.js src/__tests__/signalProfile.test.js` in `frontend/`.
-- Browser suites run from the repository root: `node frontend/scripts/testAuthBrowser.mjs`, `node frontend/scripts/testCaptureBrowser.mjs`, and `node frontend/scripts/testProjectControls.mjs`. They use local Chrome; the auth suite mocks Supabase's endpoints and needs no keys.
+- Browser suites run from the repository root: `node frontend/scripts/testAuthBrowser.mjs`, `node frontend/scripts/testCaptureBrowser.mjs`, and `node frontend/scripts/testProjectControls.mjs`. They use local Chrome; the auth suite mocks Supabase's endpoints and needs no keys, and covers signup, confirmation, password login, forgot-password, and the reset form.
 - Security suites: `node frontend/scripts/testSecurityBrowser.mjs` (URL tampering, cross-account isolation, stored XSS), `node frontend/scripts/testProfilePhoto.mjs` (upload, crop, rejection, removal), `node frontend/scripts/testSecrets.mjs` (no tracked credentials), and `npm test` in `backend/` (API authorization, CORS, rate limits, upload filtering).
 - `node frontend/scripts/testBranding.mjs` checks the transparent 512 × 512 brand mark in the header, auth card, and favicon.
 - `node frontend/scripts/testRecordingSync.mjs` uses a simulated Supabase API to prove an existing recording reaches a second isolated browser, another account stays empty, chunked audio is restored, and a deletion propagates.
@@ -214,11 +222,11 @@ Residual risks to know about:
 - [x] Browse a sample community feed, edit a local artist profile, and feature projects.
 - [x] Filter curated opportunities and open the original postings.
 - [x] Create an account, confirm the email, log in, and sign out with Supabase Auth.
+- [x] Reset a forgotten password by email.
 - [x] Upload a profile photo from the computer, cropped and stored locally.
 - [x] Isolate accounts, harden uploads and headers, and keep credentials out of Git.
 - [x] Keep recordings with the account across browsers and devices.
 
 **Still to build**
 
-- [ ] Self-service password reset and account recovery.
 - [ ] Populate the community feed with activity from real accounts.

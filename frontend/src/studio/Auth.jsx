@@ -61,7 +61,7 @@ export default function Auth({signup,callbackFailed}){
         {signup&&<label>Artist name<input autoComplete="nickname" name="username" maxLength={80} required/></label>}
         <label>Email address<input name="email" type="email" autoComplete="email" placeholder="you@example.com" required/></label>
         <label>Password<span className="password-field"><input name="password" type={show?'text':'password'} autoComplete={signup?'new-password':'current-password'} minLength={signup&&!legacyAuth?8:undefined} placeholder={signup&&!legacyAuth?'At least 8 characters':undefined} required/><button type="button" aria-label={show?'Hide password':'Show password'} onClick={()=>setShow(s=>!s)}>{show?<EyeOff size={16}/>:<Eye size={16}/>}</button></span></label>
-        {!signup&&recoveryPage&&<a className="help-link" href={recoveryPage}>Forgot email or password?</a>}
+        {!signup&&(supabase?<Link className="help-link" to="/forgot-password">Forgot password?</Link>:recoveryPage&&<a className="help-link" href={recoveryPage}>Forgot email or password?</a>)}
         {error&&<p className="error" role="alert">{error}</p>}
         <button disabled={busy||!configured} className="btn primary">{busy?'Please wait…':signup?'Create account':'Log in'}<ArrowRight size={16}/></button>
       </form>

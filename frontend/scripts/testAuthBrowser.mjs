@@ -16,7 +16,7 @@ try{
   browser=await chromium.launch(process.env.BROWSER_PATH?{executablePath:process.env.BROWSER_PATH}:{channel:'chrome'});
   const page=await browser.newPage({baseURL:base});
   page.setDefaultTimeout(12000);
-  const email='artist@example.test',password='example-passphrase';
+  const email='artist@example.test',password='example-passphrase',newPassword='replacement-passphrase';
   const user={id:'18e3af94-a713-4ecd-8cc1-7e509807ca44',email,app_metadata:{},user_metadata:{artist_name:'Session Artist'}};
   const session={user,access_token:'fixture-access',refresh_token:'fixture-refresh',token_type:'bearer',expires_in:3600};
   const grants=[];
@@ -28,16 +28,25 @@ try{
       assert.equal(url.searchParams.get('redirect_to'),`${base}/auth/callback`);
       return route.fulfill({json:user});
     }
+    if(url.pathname.endsWith('/recover')){
+      assert.equal(body.email,email);
+      assert.equal(url.searchParams.get('redirect_to'),`${base}/reset-password`);
+      return route.fulfill({json:{}});
+    }
     if(url.pathname.endsWith('/token')){
       const grant=url.searchParams.get('grant_type');
       grants.push(grant);
       if(grant==='pkce'){
-        assert.equal(body.auth_code,'fixture-code');
+        assert.ok(['fixture-code','recovery-code'].includes(body.auth_code));
         assert.ok(body.code_verifier);
       }else if(body.password!==password){
         return route.fulfill({status:400,json:{message:'Invalid login credentials'}});
       }
       return route.fulfill({json:session});
+    }
+    if(url.pathname.endsWith('/user')&&req.method()==='PUT'){
+      assert.equal(body.password,newPassword);
+      return route.fulfill({json:user});
     }
     if(url.pathname.endsWith('/resend')){
       assert.equal(body.email,email);
@@ -80,8 +89,22 @@ try{
   await page.getByRole('button',{name:'Sign out'}).click();
   await page.getByRole('link',{name:'Log in',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'Continue with Google'}).count(),0,'Google sign-in should not be offered');
-  assert.deepEqual(grants,['pkce','password','password']);
-  console.log('PASS signup, confirmation, reload, logout, password login, and email-only auth page');
+
+  await page.getByRole('link',{name:'Forgot password?'}).click();
+  await page.getByRole('heading',{name:'Reset password'}).waitFor();
+  await page.getByLabel('Email address').fill(email);
+  await page.getByRole('button',{name:'Send reset link'}).click();
+  await page.getByText(/If an account exists/).waitFor();
+
+  await page.goto('/reset-password?code=recovery-code');
+  await page.getByLabel('New password',{exact:true}).waitFor();
+  await page.getByLabel('New password',{exact:true}).fill(newPassword);
+  await page.getByLabel('Confirm new password',{exact:true}).fill(newPassword);
+  await page.getByRole('button',{name:'Update password'}).click();
+  await page.getByText('Your password was updated.').waitFor();
+
+  assert.deepEqual(grants,['pkce','password','password','pkce']);
+  console.log('PASS signup, confirmation, reload, logout, password login, email-only auth page, and password reset');
 }finally{
   await browser?.close();
   await server.close();

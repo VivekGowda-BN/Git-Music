@@ -217,6 +217,10 @@
       "group": "active-frontend"
     },
     {
+      "id": "frontend/src/studio/PasswordReset.jsx",
+      "group": "active-frontend"
+    },
+    {
       "id": "frontend/src/studio/Portfolio.jsx",
       "group": "active-frontend"
     },
@@ -682,6 +686,11 @@
       "relation": "imports"
     },
     {
+      "from": "frontend/src/studio/PasswordReset.jsx",
+      "to": "frontend/src/lib/supabase.js",
+      "relation": "imports"
+    },
+    {
       "from": "frontend/src/studio/playback.js",
       "to": "frontend/src/lib/api.js",
       "relation": "imports"
@@ -769,6 +778,11 @@
     {
       "from": "frontend/src/studio/Studio.jsx",
       "to": "frontend/src/studio/Auth.jsx",
+      "relation": "imports"
+    },
+    {
+      "from": "frontend/src/studio/Studio.jsx",
+      "to": "frontend/src/studio/PasswordReset.jsx",
       "relation": "imports"
     },
     {

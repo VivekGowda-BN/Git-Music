@@ -11,6 +11,7 @@ import {claimGuestLibrary,loadLibrary} from './library';
 import {API_URL,getAuthHeaders,getAuthToken,getAuthUserId,clearAuthSession,fetchCurrentUser} from '../lib/api';
 import Feed from './Feed';
 import Auth from './Auth';
+import {ForgotPassword,ResetPassword} from './PasswordReset';
 import {featured} from './featured';
 import {legacyAuth,supabase} from '../lib/supabase';
 import {safePhoto} from './profilePhoto';
@@ -141,5 +142,5 @@ export default function Studio(){
   const scope=identity?`supabase-${identity.id}`:oldScope;
   const signedIn=scope!=='guest';
   const dashboard=<Navigate replace to="/dashboard"/>;
-  return <BrowserRouter><Routes><Route element={<Shell key={scope} scope={scope} identity={identity}/>}><Route index element={<Home/>}/><Route path="home" element={<Home/>}/><Route path="feed" element={<Feed/>}/><Route path="capture" element={<Capture/>}/><Route path="dashboard" element={<Dashboard/>}/><Route path="opportunities" element={<Opportunities/>}/><Route path="profile" element={<Profile/>}/><Route path="preview/profile" element={<PreviewProfile/>}/><Route path="login" element={signedIn?dashboard:<Auth key="login"/>}/><Route path="signup" element={signedIn?dashboard:<Auth key="signup" signup/>}/><Route path="auth/callback" element={identity?dashboard:<Auth key="callback" callbackFailed/>}/><Route path="analyse" element={<Navigate replace to="/capture"/>}/><Route path="compare" element={<Navigate replace to="/dashboard"/>}/><Route path="*" element={<Navigate replace to="/home"/>}/></Route></Routes></BrowserRouter>;
+  return <BrowserRouter><Routes><Route element={<Shell key={scope} scope={scope} identity={identity}/>}><Route index element={<Home/>}/><Route path="home" element={<Home/>}/><Route path="feed" element={<Feed/>}/><Route path="capture" element={<Capture/>}/><Route path="dashboard" element={<Dashboard/>}/><Route path="opportunities" element={<Opportunities/>}/><Route path="profile" element={<Profile/>}/><Route path="preview/profile" element={<PreviewProfile/>}/><Route path="login" element={signedIn?dashboard:<Auth key="login"/>}/><Route path="signup" element={signedIn?dashboard:<Auth key="signup" signup/>}/><Route path="auth/callback" element={identity?dashboard:<Auth key="callback" callbackFailed/>}/><Route path="forgot-password" element={<ForgotPassword/>}/><Route path="reset-password" element={<ResetPassword/>}/><Route path="analyse" element={<Navigate replace to="/capture"/>}/><Route path="compare" element={<Navigate replace to="/dashboard"/>}/><Route path="*" element={<Navigate replace to="/home"/>}/></Route></Routes></BrowserRouter>;
 }

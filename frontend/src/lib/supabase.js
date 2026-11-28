@@ -9,3 +9,4 @@ export const supabase = !legacyAuth && url && key
   ? createClient(url,key,{auth:{flowType:'pkce'}})
   : null;
 export const callbackUrl = () => new URL('/auth/callback',window.location.origin).href;
+export const resetPasswordUrl = () => new URL('/reset-password',window.location.origin).href;

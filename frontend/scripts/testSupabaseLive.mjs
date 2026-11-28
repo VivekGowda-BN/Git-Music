@@ -29,6 +29,7 @@ try{
   console.log('Signup form is live with email-only auth');
 
   await page.goto('/login');
+  assert.equal(await page.getByRole('link',{name:'Forgot password?'}).count(),1,'Password reset link is missing');
   await page.getByLabel('Email address').fill('nobody@example.invalid');
   await page.locator('[name=password]').fill('definitely-wrong-password');
   await page.getByRole('button',{name:'Log in',exact:true}).click();
